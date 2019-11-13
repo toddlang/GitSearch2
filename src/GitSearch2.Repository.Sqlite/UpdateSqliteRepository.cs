@@ -7,7 +7,7 @@ namespace GitSearch2.Repository.Sqlite {
 	public sealed class UpdateSqliteRepository : SqliteRepository, IUpdateRepository {
 
 		private const string SchemaId = "15c8b53ab898475497ad37cf968b93aa";
-		private const int TargetSchema = 1;
+		private const int TargetSchema = 2;
 
 		public UpdateSqliteRepository( IOptions<SqliteOptions> options )
 			: this( options.Value ) {
@@ -28,10 +28,9 @@ namespace GitSearch2.Repository.Sqlite {
 					SESSION NVARCHAR(32) NOT NULL,
 					PROJECT NVARCHAR(128) NOT NULL,
 					REPO NVARCHAR(128) NOT NULL,
-					PROGRESS INTEGER NOT NULL,
 					STARTED TEXT NOT NULL,
 					FINISHED TEXT,
-					LAST_COMMIT_ID NVARCHAR(64),
+					COMMITS_WRITTEN INT,
 					PRIMARY KEY(SESSION, PROJECT, REPO)
 				)
 			;";
@@ -40,20 +39,66 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		protected override void UpdateSchema( int targetSchema ) {
-			throw new InvalidOperationException();
+			switch (targetSchema) {
+				case 2: {
+						string sql = @"
+							ALTER TABLE
+								GIT_UPDATE
+							RENAME TO GIT_UPDATE_OLD
+						;";
+						ExecuteNonQuery( sql );
+
+						sql = @"
+							CREATE TABLE GIT_UPDATE
+							(
+								SESSION NVARCHAR(32) NOT NULL,
+								PROJECT NVARCHAR(128) NOT NULL,
+								REPO NVARCHAR(128) NOT NULL,
+								STARTED TEXT NOT NULL,
+								FINISHED TEXT,
+								COMMITS_WRITTEN INT,
+								PRIMARY KEY(SESSION, PROJECT, REPO)
+							)
+						;";
+
+						ExecuteNonQuery( sql );
+
+						sql = @"
+							INSERT INTO GIT_UPDATE
+								(SESSION, PROJECT, REPO, STARTED, FINISHED)
+							SELECT
+								SESSION,
+								PROJECT,
+								REPO,
+								STARTED,
+								FINISHED
+							FROM
+								GIT_UPDATE_OLD
+						;";
+
+						ExecuteNonQuery( sql );
+
+						sql = @"
+							DROP TABLE GIT_UPDATE_OLD
+						;";
+
+						ExecuteNonQuery( sql );
+					}
+					break;
+			}
 		}
 
-		IEnumerable<RepoProgress> IUpdateRepository.GetProgress(
+		UpdateSession IUpdateRepository.GetUpdateSession(
 			Guid session
 		) {
 			string sql = @"
 				SELECT
+					SESSION,
 					PROJECT,
 					REPO,
-					PROGRESS,
 					STARTED,
 					FINISHED,
-					LAST_COMMIT_ID
+					COMMITS_WRITTEN
 				FROM
 					GIT_UPDATE
 				WHERE
@@ -64,7 +109,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@session", session.ToString("N") }
 			};
 
-			return ExecuteReader( sql, parameters, ReadProgress );
+			return ExecuteSingleReader( sql, parameters, ReadProgress );
 		}
 
 		void IUpdateRepository.Begin(
@@ -79,7 +124,6 @@ namespace GitSearch2.Repository.Sqlite {
 					SESSION,
 					PROJECT,
 					REPO,
-					PROGRESS,
 					STARTED
 				)
 				VALUES
@@ -87,7 +131,6 @@ namespace GitSearch2.Repository.Sqlite {
 					@session,
 					@project,
 					@repo,
-					@progress,
 					@started
 				)
 			;";
@@ -96,7 +139,6 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@session", session.ToString("N") },
 				{ "@project", project },
 				{ "@repo", repo },
-				{ "@progress", 0 },
 				{ "@started", ToText(started) }
 			};
 
@@ -105,56 +147,22 @@ namespace GitSearch2.Repository.Sqlite {
 
 		void IUpdateRepository.End(
 			Guid session,
-			string repo,
-			string project,
 			DateTimeOffset finished,
-			string lastCommitId
+			int commitsWritten
 		) {
 			string sql = @"
 				UPDATE GIT_UPDATE
 				SET
 					FINISHED = @finished,
-					PROGRESS = @progress,
-					LAST_COMMIT_ID = @lastCommitId
+					COMMITS_WRITTEN = @written
 				WHERE
 					SESSION = @session
-					AND PROJECT = @project
-					AND REPO = @repo
 			;";
 
 			var parameters = new Dictionary<string, object>() {
 				{ "@session", session.ToString("N") },
-				{ "@project", project },
-				{ "@repo", repo },
 				{ "@finished", ToText(finished) },
-				{ "@progress", 100 },
-				{ "@lastCommitId", lastCommitId }
-			};
-
-			ExecuteNonQuery( sql, parameters );
-		}
-
-		void IUpdateRepository.SetProgress(
-			Guid session,
-			string repo,
-			string project,
-			int progress
-		) {
-			string sql = @"
-				UPDATE GIT_UPDATE
-				SET
-					PROGRESS = @progress
-				WHERE
-					SESSION = @session
-					AND PROJECT = @project
-					AND REPO = @repo
-			;";
-
-			var parameters = new Dictionary<string, object>() {
-				{ "@session", session.ToString("N") },
-				{ "@project", project },
-				{ "@repo", repo },
-				{ "@progress", progress }
+				{ "@written", commitsWritten }
 			};
 
 			ExecuteNonQuery( sql, parameters );
@@ -185,15 +193,15 @@ namespace GitSearch2.Repository.Sqlite {
 			return ExecuteSingleReader( sql, parameters, LoadDateTimeOffset );
 		}
 
-		private RepoProgress ReadProgress( DbDataReader reader ) {
+		private UpdateSession ReadProgress( DbDataReader reader ) {
+			string dbSession = GetString( reader, "SESSION" );
 			string dbRepo = GetString( reader, "REPO" );
 			string dbProject = GetString( reader, "PROJECT" );
-			int dbProgress = GetInt( reader, "PROGRESS" );
 			DateTimeOffset dbStarted = GetDateTimeOffset( reader, "STARTED" );
 			DateTimeOffset? dbFinished = GetNullableDateTimeOffset( reader, "FINISHED" );
-			string dbLastCommitId = GetString( reader, "LAST_COMMIT_ID" );
+			int dbCommitsWritten = GetInt( reader, "COMMITS_WRITTEN" );
 
-			return new RepoProgress( dbRepo, dbProject, dbProgress, dbStarted, dbFinished, dbLastCommitId );
+			return new UpdateSession( dbSession, dbRepo, dbProject, dbStarted, dbFinished, dbCommitsWritten );
 		}
 	}
 }

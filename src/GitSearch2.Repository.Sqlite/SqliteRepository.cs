@@ -494,7 +494,7 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		protected static string ToText(DateTimeOffset value) {
-			return value.ToUniversalTime().ToString( "yyyy-MM-dd HH:MM:ss" );
+			return value.ToUniversalTime().ToString( "yyyy-MM-dd HH:mm:ss" );
 		}
 
 		protected static DateTimeOffset? GetNullableDateTimeOffset( DbDataReader reader, string column ) {

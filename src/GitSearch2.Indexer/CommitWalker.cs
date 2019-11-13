@@ -15,6 +15,7 @@ namespace GitSearch2.Indexer {
 
 		private readonly INameParser _repoNameParser;
 		private readonly ICommitRepository _commitRepository;
+		private readonly IUpdateRepository _updateRepository;
 		private readonly string _gitFolder;
 		private readonly bool _liveDisplay;
 
@@ -26,10 +27,12 @@ namespace GitSearch2.Indexer {
 
 		public CommitWalker(
 			ICommitRepository commitRepository,
+			IUpdateRepository updateRepository,
 			string gitFolder,
 			bool liveDisplay
 		) {
 			_commitRepository = commitRepository;
+			_updateRepository = updateRepository;
 			_gitFolder = gitFolder;
 			_liveDisplay = liveDisplay;
 			_repoNameParser = new NameParser();
@@ -46,6 +49,8 @@ namespace GitSearch2.Indexer {
 			Remote remote = gitRepo.Network.Remotes.First();
 
 			RepoProjectName name = _repoNameParser.Parse( remote.Url );
+			Guid session = Guid.NewGuid();
+			_updateRepository.Begin( session, name.Repo, name.Project, DateTimeOffset.Now );
 
 			// Short-circuit pre-history so that we never try to walk
 			// farther back than this point.
@@ -104,6 +109,8 @@ namespace GitSearch2.Indexer {
 
 				gitRepo = GetRepo();
 			}
+
+			_updateRepository.End( session, DateTimeOffset.Now, _statistics.Written );
 		}
 
 		/// <summary>

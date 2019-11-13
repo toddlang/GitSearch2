@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 namespace GitSearch2.Repository {
 	public interface IUpdateRepository {
@@ -7,12 +6,10 @@ namespace GitSearch2.Repository {
 
 		DateTimeOffset GetMostRecentCommit();
 
-		IEnumerable<RepoProgress> GetProgress( Guid session );
-
-		void SetProgress( Guid session, string repo, string project, int progress );
+		UpdateSession GetUpdateSession( Guid session );
 
 		void Begin( Guid session, string repo, string project, DateTimeOffset started );
 
-		void End( Guid session, string repo, string project, DateTimeOffset finished, string lastCommitId );
+		void End( Guid session, DateTimeOffset finished, int commitsWritten );
 	}
 }

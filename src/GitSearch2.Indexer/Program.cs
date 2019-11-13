@@ -19,8 +19,12 @@ namespace GitSearch2.Indexer {
 				  IUpdateRepository updateRepo = new UpdateSqliteRepository( options );
 				  updateRepo.Initialize();
 
-				  ICommitWalker visitor = new CommitWalker( commitRepo, opts.GitFolder, opts.LiveStatisticsDisplay );
-
+				  ICommitWalker visitor = new CommitWalker(
+					  commitRepo,
+					  updateRepo,
+					  opts.GitFolder,
+					  opts.LiveStatisticsDisplay );
+				  
 				  visitor.Run();
 
 				  DateTimeOffset stop = DateTimeOffset.Now;
