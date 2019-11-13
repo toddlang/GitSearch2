@@ -1,0 +1,34 @@
+﻿@inherits CommitDetailsViewBase
+
+    <div>
+        <div><a href="@CommitUrl" target="_blank">@Details.CommitId</a> - @Details.AuthorName</div>
+        @if (!string.IsNullOrWhiteSpace(Details.PR))
+        {
+            <div>
+                Merged via <a href="@PrUrl" target="_blank">Pull Request #@Details.PR</a> through commit@(Details.Commits.Count() > 1 ? "s" : "")
+                @foreach (string commitId in MergeUrls.Keys)
+                {
+                    <div class="indented">
+                        <a href="@(MergeUrls[commitId])" target="_blank">@commitId</a>
+                    </div>
+                }
+            </div>
+        }
+        <div><strong>@Details.Project/</strong><strong>@Details.Repo</strong> - @Details.Date</div>
+
+        <div class="indented">
+            @foreach (string line in Details.Description)
+            {
+                <div>@line</div>
+            }
+        </div>
+        <div class="dropped">
+            @foreach (string file in FileUrls.Keys)
+            {
+                <div>
+                    <a href="@(FileUrls[file])" target="_blank">@file</a><div></div>
+                </div>
+            }
+        </div>
+    </div>
+

@@ -1,0 +1,45 @@
+﻿@using GitSearch2.Shared
+@page "/"
+@layout MainLayout
+
+<form @onsubmit="TriggerSearch">
+    <div class="form-group fadein">
+        <input type="text" class="form-control" id="searchTerm" aria-describedby="searchTermHelp" placeholder="Search Term" autofocus @bind="SearchTerm" disabled="@(Busy)" />
+        <small id="searchTermHelp" class="form-text text-muted">Enter the text to be located within git commits. (Limited to first 100 results)</small>
+        <a data-toggle="collapse" href="#help"><small class="text-muted">Help</small></a>
+        <div id="help" class="collapse">
+            <div class="card card-body">
+                <small class="form-text text-muted"><code>*</code> for sub-string matching.  e.g. <code>Foo*</code> to match anything starting with <code>Foo</code>.</small>
+                <small class="form-text text-muted"><code>OR</code> between terms to match if either is present. e.g. <code>Foo OR Bar</code> will return results that contain <code>Foo</code> or <code>Bar</code>.</small>
+                <small class="form-text text-muted"><code>AND</code> between terms to match when both are present. (This is implied when using multiple terms).</small>
+                <small class="form-text text-muted"><code>NOT</code> to exclude the following term from matching. e.g. <code>Foo NOT Bar</code> will return results for all that contain <code>Foo</code> but cannot contain <code>Bar</code>.</small>
+                <small class="form-text text-muted"><code>()</code> to prioritize matching clauses. e.g. <code>foo (Bar OR Baz)</code> will get results that contain <code>foo</code>, but must also contain <code>Bar</code> or <code>Baz</code>.</small>
+            </div>
+        </div>
+    </div>
+</form>
+<div class="fadein screen-center lds-dual-ring" hidden="@(!Busy)"></div>
+
+@if (Commits.Any())
+{
+    <table class="table table-striped">
+        <tbody>
+            @foreach (CommitDetails commit in Commits)
+            {
+                <tr class="row">
+                    <td>
+                        <CommitDetailsView Details=commit></CommitDetailsView>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    @if (!FirstSearch)
+    {
+        <div class="fadein">No results</div>
+    }
+}
+

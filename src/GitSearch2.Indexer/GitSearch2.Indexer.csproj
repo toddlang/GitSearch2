@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.6.0" />
+    <PackageReference Include="LibGit2Sharp" Version="0.26.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GitSearch2.Repository.Sqlite\GitSearch2.Repository.Sqlite.csproj" />
+    <ProjectReference Include="..\GitSearch2.Repository\GitSearch2.Repository.csproj" />
+    <ProjectReference Include="..\GitSearch2.Shared\GitSearch2.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

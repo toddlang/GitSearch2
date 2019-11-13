@@ -1,0 +1,34 @@
+﻿body {
+    padding-left: 10%;
+    padding-right: 10%;
+    padding-top: 1.0%;
+}
+
+.fadein {
+    animation: fadein 0.3s;
+}
+
+@keyframes fadein {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.screen-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.indented {
+    padding-left: 2em;
+}
+
+.dropped {
+    padding-top: 1em;
+}
