@@ -2,6 +2,7 @@ using System;
 using GitSearch2.Client.Service;
 using Microsoft.AspNetCore.Components.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 namespace GitSearch2.Client {
 #pragma warning disable CA1822
@@ -12,6 +13,7 @@ namespace GitSearch2.Client {
 		}
 
 		public void Configure( IComponentsApplicationBuilder app ) {
+			app.UseLocalTimeZone();
 			app.AddComponent<App>( "app" );
 		}
 	}

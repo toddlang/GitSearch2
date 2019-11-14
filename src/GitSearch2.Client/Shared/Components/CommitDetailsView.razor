@@ -14,7 +14,7 @@
                 }
             </div>
         }
-        <div><strong>@Details.Project/</strong><strong>@Details.Repo</strong> - @Details.Date</div>
+        <div><strong>@Details.Project/</strong><strong>@Details.Repo</strong> - @(DateTimeOffset.Parse(Details.Date).Subtract(TimeZoneInfo.Local.BaseUtcOffset).DateTime.ToString("yyyy-MMM-dd h:mm:ss tt"))</div>
 
         <div class="indented">
             @foreach (string line in Details.Description)
@@ -31,4 +31,3 @@
             }
         </div>
     </div>
-

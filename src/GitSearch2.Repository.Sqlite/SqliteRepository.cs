@@ -11,6 +11,7 @@ namespace GitSearch2.Repository.Sqlite {
 		internal SqliteTransaction Transaction;
 	}
 
+#pragma warning disable CA1012
 	public abstract class SqliteRepository {
 		private readonly string _connectionString;
 
@@ -506,4 +507,5 @@ namespace GitSearch2.Repository.Sqlite {
 			return new DateTimeOffset( reader.GetDateTime( index ), TimeSpan.Zero );
 		}
 	}
+#pragma warning restore CA1012
 }
