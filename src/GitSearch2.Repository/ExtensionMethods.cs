@@ -5,13 +5,18 @@ using Microsoft.Extensions.DependencyInjection;
 namespace GitSearch2.Repository {
 	public static class ExtensionMethods {
 		public static IApplicationBuilder UseRepositories( this IApplicationBuilder builder ) {
-			ICommitRepository commitRepository = builder.ApplicationServices.GetService<ICommitRepository>();
+			builder.ApplicationServices.InitializeRepositories();
+			return builder;
+		}
+
+		public static IServiceProvider InitializeRepositories( this IServiceProvider services ) {
+			ICommitRepository commitRepository = services.GetService<ICommitRepository>();
 			commitRepository.Initialize();
 
-			IUpdateRepository updateRepository = builder.ApplicationServices.GetService<IUpdateRepository>();
+			IUpdateRepository updateRepository = services.GetService<IUpdateRepository>();
 			updateRepository.Initialize();
 
-			return builder;
+			return services;
 		}
 	}
 }

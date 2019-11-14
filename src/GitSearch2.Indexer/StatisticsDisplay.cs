@@ -8,9 +8,9 @@ namespace GitSearch2.Indexer {
 		private readonly bool _liveDisplay;
 		private int _updates;
 
-		public StatisticsDisplay( bool liveDisplay ) {
+		public StatisticsDisplay( Options options ) {
 			_cursorTop = Console.CursorTop;
-			_liveDisplay = liveDisplay;
+			_liveDisplay = options.LiveStatisticsDisplay;
 		}
 
 		void IStatisticsDisplay.UpdateStatistics( IStatistics statistics ) {

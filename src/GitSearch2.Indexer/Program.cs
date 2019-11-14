@@ -2,30 +2,36 @@ using System;
 using CommandLine;
 using GitSearch2.Repository;
 using GitSearch2.Repository.Sqlite;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GitSearch2.Indexer {
 	public sealed class Program {
 		public static void Main( string[] args ) {
 			Parser.Default.ParseArguments<Options>( args )
 			  .WithParsed( opts => {
+
 				  SqliteOptions options = new SqliteOptions() {
-					  ConnectionString = "Data Source=webapp.sqlite3"
+					  ConnectionString = $"Data Source={opts.Database}"
 				  };
+
+				  IServiceProvider services = new ServiceCollection()
+					.AddSingleton( opts )
+					.AddSingleton( options )
+					.AddSingleton<ICommitWalker, CommitWalker>()
+					.AddSingleton<IStatisticsDisplay, StatisticsDisplay>()
+					.AddSingleton<INameParser, NameParser>()
+					.AddSingleton<ICommitRepository, CommitSqliteRepository>()
+					.AddSingleton<IUpdateRepository, UpdateSqliteRepository>()
+					.AddSingleton<IGitRepoProvider, GitRepoProvider>()
+					.BuildServiceProvider();
+
+				  services.InitializeRepositories();
+
 
 				  DateTimeOffset start = DateTimeOffset.Now;
 
-				  ICommitRepository commitRepo = new CommitSqliteRepository( options );
-				  commitRepo.Initialize();
-				  IUpdateRepository updateRepo = new UpdateSqliteRepository( options );
-				  updateRepo.Initialize();
-
-				  ICommitWalker visitor = new CommitWalker(
-					  commitRepo,
-					  updateRepo,
-					  opts.GitFolder,
-					  opts.LiveStatisticsDisplay );
-				  
-				  visitor.Run();
+				  ICommitWalker walker = services.GetService<ICommitWalker>();
+				  walker.Run();
 
 				  DateTimeOffset stop = DateTimeOffset.Now;
 

@@ -11,41 +11,36 @@ namespace GitSearch2.Indexer {
 	internal class CommitWalker : ICommitWalker {
 
 		private const string PreHistoryId = "53ef49c5f0b2711409a7e295a2d515e70850415e";
-		private const int DiffCycle = 1000;
 
 		private readonly INameParser _repoNameParser;
 		private readonly ICommitRepository _commitRepository;
 		private readonly IUpdateRepository _updateRepository;
-		private readonly string _gitFolder;
-		private readonly bool _liveDisplay;
+		private readonly IStatisticsDisplay _statisticsDisplay;
+		private readonly IGitRepoProvider _gitRepoProvider;
 
 		private IStatistics _statistics;
-		private IStatisticsDisplay _statisticsDisplay;
-
-		private int _diffCalls;
-		private LibGit2Sharp.Repository _gitRepo;
 
 		public CommitWalker(
 			ICommitRepository commitRepository,
 			IUpdateRepository updateRepository,
-			string gitFolder,
-			bool liveDisplay
+			INameParser repoNameParser,
+			IStatisticsDisplay statisticsDisplay,
+			IGitRepoProvider gitRepoProvider
 		) {
 			_commitRepository = commitRepository;
 			_updateRepository = updateRepository;
-			_gitFolder = gitFolder;
-			_liveDisplay = liveDisplay;
-			_repoNameParser = new NameParser();
+			_repoNameParser = repoNameParser;
+			_statisticsDisplay = statisticsDisplay;
+			_gitRepoProvider = gitRepoProvider;
 		}
 
 		void ICommitWalker.Run() {
 			HashSet<string> visited = new HashSet<string>();
 			Stack<string> toVisit = new Stack<string>();
 
-			_statisticsDisplay = new StatisticsDisplay( _liveDisplay );
 			_statistics = new Statistics( visited, toVisit );
 
-			LibGit2Sharp.Repository gitRepo = GetRepo();
+			LibGit2Sharp.Repository gitRepo = _gitRepoProvider.GetRepo();
 			Remote remote = gitRepo.Network.Remotes.First();
 
 			RepoProjectName name = _repoNameParser.Parse( remote.Url );
@@ -81,7 +76,7 @@ namespace GitSearch2.Indexer {
 				current = current.Parents.ElementAt( 0 );
 				_statisticsDisplay.UpdateStatistics( _statistics );
 
-				gitRepo = GetRepo( current, out current );
+				gitRepo = _gitRepoProvider.GetRepo( current, out current );
 			}
 
 			// Now we run through every commit that we "skipped" in the previous pass
@@ -107,7 +102,7 @@ namespace GitSearch2.Indexer {
 
 				_statisticsDisplay.UpdateStatistics( _statistics );
 
-				gitRepo = GetRepo();
+				gitRepo = _gitRepoProvider.GetRepo();
 			}
 
 			_updateRepository.End( session, DateTimeOffset.Now, _statistics.Written );
@@ -224,20 +219,7 @@ namespace GitSearch2.Indexer {
 			string prNumber,
 			IEnumerable<string> mergeVia
 		) {
-			var files = new List<string>();
-
-			LibGit2Sharp.CompareOptions options = new LibGit2Sharp.CompareOptions() {
-				IncludeUnmodified = false
-			};
-			// We need to track the calls for diffs since LibGit2Sharp experiences
-			// some massive performance loss the more this method is called.
-			// Once we reach a pre-set limit, we recycle the repo object and this
-			// will clear up the performance problem.
-			_diffCalls += 1;
-			TreeChanges treeChanges = gitRepo.Diff.Compare<TreeChanges>( commit.Parents.First().Tree, commit.Tree, options );
-			foreach( TreeEntryChanges change in treeChanges ) {
-				files.Add( change.Path.Replace( @"\", @"/" ) );
-			}
+			IEnumerable<string> files = _gitRepoProvider.GetCommitFiles( commit );
 
 			string[] description = commit.Message.Split( '\n' ).Select( l => l.Trim() ).ToArray();
 
@@ -247,11 +229,11 @@ namespace GitSearch2.Indexer {
 				commitId: commit.Id.ToString(),
 				date: commit.Committer.When.ToString( "yyyyMMddTHHmmssfffffffZ", CultureInfo.InvariantCulture ),
 				description: description,
-				files: files.ToArray(),
+				files: files,
 				pr: prNumber,
 				project: projectName,
 				repo: repoName,
-				commits: mergeVia.ToArray(),
+				commits: mergeVia,
 				isMerge: false
 			);
 
@@ -272,66 +254,6 @@ namespace GitSearch2.Indexer {
 
 		private bool IsMergeInto( Commit commit ) {
 			return ( commit.Message.Contains( "Merge" ) && commit.Message.Contains( "into" ) );
-		}
-
-		/// <summary>
-		/// Retrieves a reference to the git repository.
-		/// </summary>
-		/// <returns>
-		/// Returns the reference to the git repository to be used.
-		/// </returns>
-		/// <remarks>
-		/// Unfortunately, LibGit2Sharp loses performance over time when calling
-		/// for diffs.  That is...the time it takes to calculate the diff between
-		/// commits climbs dramatically the more times it is called.   So, after
-		/// a certain number of operations we will recycle the Repository reference
-		/// and this seems to clear the problem.
-		/// </remarks>
-		private LibGit2Sharp.Repository GetRepo() {
-			if (_gitRepo == null) {
-				_gitRepo = new LibGit2Sharp.Repository( _gitFolder );
-				return _gitRepo;
-			}
-
-			if( _diffCalls >= DiffCycle ) {
-				_gitRepo.Dispose();
-				_diffCalls = 0;
-				_gitRepo = new LibGit2Sharp.Repository( _gitFolder );
-				return _gitRepo;
-			}
-
-			return _gitRepo;
-		}
-
-		/// <summary>
-		/// Retrieves a reference to the git repository, optionally refreshing
-		/// the currently processed commit to ensure it is pointing at the
-		/// correct repository instance.
-		/// </summary>
-		/// <param name="current">The currently processed commit.</param>
-		/// <param name="newCurrent">The current commit now associated with the new repository.</param>
-		/// <returns>
-		/// Returns the reference to the git repository to be used.
-		/// </returns>
-		/// <remarks>
-		/// Unfortunately, LibGit2Sharp loses performance over time when calling
-		/// for diffs.  That is...the time it takes to calculate the diff between
-		/// commits climbs dramatically the more times it is called.   So, after
-		/// a certain number of operations we will recycle the Repository reference
-		/// and this seems to clear the problem.
-		/// </remarks>
-		private LibGit2Sharp.Repository GetRepo( Commit current, out Commit newCurrent ) {
-			if( _diffCalls >= DiffCycle ) {
-				ObjectId commitId = current?.Id;
-				_gitRepo.Dispose();
-				_diffCalls = 0;
-				_gitRepo = new LibGit2Sharp.Repository( _gitFolder );
-				newCurrent = commitId != null ? _gitRepo.Lookup<Commit>( commitId ) : null;
-				return _gitRepo;
-			}
-
-			newCurrent = current;
-			return _gitRepo;
 		}
 	}
 }

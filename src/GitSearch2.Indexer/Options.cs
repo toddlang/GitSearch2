@@ -11,5 +11,8 @@ namespace GitSearch2.Indexer {
 
 		[Option('l', "live", Required = false, Default = false, HelpText = "Live statistics display.")]
 		public bool LiveStatisticsDisplay { get; set; }
+
+		[Option('d', "database", Required = true, Default = "webapp.sqlite3", HelpText = "Location of Sqlite database." )]
+		public string Database { get; set; }
 	}
 }

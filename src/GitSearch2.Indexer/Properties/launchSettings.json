@@ -2,7 +2,7 @@
   "profiles": {
     "GitSearch2.Indexer": {
       "commandName": "Project",
-      "commandLineArgs": "--input c:\\d2l\\instances\\dev2\\checkout\\.git --pause true --live true"
+      "commandLineArgs": "--input c:\\d2l\\instances\\dev2\\checkout\\.git --pause true --live true --database webapp.sqlite3"
     }
   }
 }
