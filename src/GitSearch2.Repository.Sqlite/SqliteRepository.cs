@@ -494,6 +494,12 @@ namespace GitSearch2.Repository.Sqlite {
 			return new DateTimeOffset( reader.GetDateTime( reader.GetOrdinal( column ) ), TimeSpan.Zero );
 		}
 
+		protected static DateTime GetDateTime( DbDataReader reader, string column ) {
+			DateTime result = reader.GetDateTime( reader.GetOrdinal( column ));
+
+			return result.ToUniversalTime();
+		}
+
 		protected static string ToText(DateTimeOffset value) {
 			return value.ToUniversalTime().ToString( "yyyy-MM-dd HH:mm:ss" );
 		}
@@ -505,6 +511,16 @@ namespace GitSearch2.Repository.Sqlite {
 			}
 
 			return new DateTimeOffset( reader.GetDateTime( index ), TimeSpan.Zero );
+		}
+
+		protected static DateTime? GetNullableDateTime( DbDataReader reader, string column ) {
+			int index = reader.GetOrdinal( column );
+			if( reader.IsDBNull( index ) ) {
+				return default;
+			}
+
+			DateTime result = reader.GetDateTime( index );
+			return result.ToUniversalTime();
 		}
 	}
 #pragma warning restore CA1012

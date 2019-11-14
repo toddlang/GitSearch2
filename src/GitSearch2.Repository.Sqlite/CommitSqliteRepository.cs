@@ -202,7 +202,7 @@ namespace GitSearch2.Repository.Sqlite {
 			string dbRepo = GetString( reader, "REPO" );
 			string dbAuthorEmail = GetString( reader, "AUTHOR_EMAIL" );
 			string dbAuthorName = GetString( reader, "AUTHOR_NAME" );
-			DateTimeOffset dbCommitDate = GetDateTimeOffset( reader, "COMMIT_DATE" );
+			DateTime dbCommitDate = GetDateTime( reader, "COMMIT_DATE" );
 			string dbFiles = GetString( reader, "FILES" );
 			string dbProject = GetString( reader, "PROJECT" );
 			string dbPrNumber = GetString( reader, "PR_NUMBER" );
@@ -212,7 +212,7 @@ namespace GitSearch2.Repository.Sqlite {
 				authorEmail: dbAuthorEmail,
 				authorName: dbAuthorName,
 				commitId: dbCommitId,
-				date: dbCommitDate.ToLocalTime().ToString(),
+				date: dbCommitDate.ToString( "yyyy-MM-ddTHH:mm:ssZ" ), //ISO8601
 				description: dbDescription.Split( EnvironmentNewLine, StringSplitOptions.None ),
 				files: dbFiles.Split( EnvironmentNewLine, StringSplitOptions.None ),
 				repo: dbRepo,
