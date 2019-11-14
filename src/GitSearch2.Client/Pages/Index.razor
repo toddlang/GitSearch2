@@ -20,6 +20,10 @@
 </form>
 <div class="fadein screen-center lds-dual-ring" hidden="@(!Busy)"></div>
 
+@if(!string.IsNullOrWhiteSpace(Message)) {
+    <div>@Message</div>
+}
+
 @if (Commits.Any())
 {
     <table class="table table-striped">

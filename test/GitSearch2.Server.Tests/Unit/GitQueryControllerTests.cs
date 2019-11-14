@@ -4,6 +4,7 @@ using GitSearch2.Repository;
 using GitSearch2.Server.Controllers;
 using GitSearch2.Shared;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 
@@ -14,21 +15,23 @@ namespace GitSearch2.Server.Tests.Unit
     {
 		private GitQueryController _gitQueryController;
 		private Mock<ICommitRepository> _commitRepository;
+		private Mock<ILogger<GitQueryController>> _logger;
 
 		[SetUp]
 		public void SetUp() {
 			_commitRepository = new Mock<ICommitRepository>( MockBehavior.Strict );
-			_gitQueryController = new GitQueryController( _commitRepository.Object );
+			_logger = new Mock<ILogger<GitQueryController>>();
+			_gitQueryController = new GitQueryController( _logger.Object, _commitRepository.Object );
 		}
 
 		[Test]
 		public void Ctor_NullRepository_ThrowsException() {
-			Assert.Throws<ArgumentException>( () => { new GitQueryController( null ); } );
+			Assert.Throws<ArgumentException>( () => { new GitQueryController( _logger.Object, null ); } );
 		}
 
 		[Test]
 		public void Search_NullRequest_ReturnsBadRequest() {
-			ActionResult<IEnumerable<CommitDetails>> response = _gitQueryController.Search( null );
+			ActionResult<GitQueryResponse> response = _gitQueryController.Search( null );
 
 			Assert.IsInstanceOf<BadRequestResult>( response.Result );
 		}
@@ -40,7 +43,7 @@ namespace GitSearch2.Server.Tests.Unit
 			_commitRepository
 				.Setup( cr => cr.Search( "term", 1 ) )
 				.Returns( commits );
-			ActionResult<IEnumerable<CommitDetails>> response = _gitQueryController.Search( query );
+			ActionResult<GitQueryResponse> response = _gitQueryController.Search( query );
 
 			Assert.IsInstanceOf<OkObjectResult>( response.Result );
 
@@ -53,7 +56,7 @@ namespace GitSearch2.Server.Tests.Unit
 			_commitRepository
 				.Setup( cr => cr.Search( "term", 1 ) )
 				.Returns( default(IEnumerable<CommitDetails>) );
-			ActionResult<IEnumerable<CommitDetails>> response = _gitQueryController.Search( query );
+			ActionResult<GitQueryResponse> response = _gitQueryController.Search( query );
 
 			Assert.IsInstanceOf<StatusCodeResult>( response.Result );
 			StatusCodeResult result = (StatusCodeResult)response.Result;

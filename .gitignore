@@ -6,6 +6,7 @@
 **/credentials.txt
 **/appsettings.development.json
 **/webapp.sqlite3
+**/logs/*
 
 # User-specific files
 *.rsuser

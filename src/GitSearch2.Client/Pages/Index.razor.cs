@@ -19,6 +19,8 @@ namespace GitSearch2.Client.Pages {
 
 		public bool FirstSearch { get; set; }
 
+		public string Message { get; set; }
+
 		[Inject] protected IGitQueryService GitQueryService { get; set; }
 
 		[Inject] protected NavigationManager UriHelper { get; set; }
@@ -39,7 +41,9 @@ namespace GitSearch2.Client.Pages {
 
 		private async Task PerformSearch( string searchTerm ) {
 			Busy = true;
-			Commits = await GitQueryService.GitQuery( searchTerm, 0 );
+			GitQueryResponse response = await GitQueryService.GitQuery( searchTerm, 0 );
+			Commits = response.Commits;
+			Message = response.Message;
 			FirstSearch = false;
 			Busy = false;
 		}

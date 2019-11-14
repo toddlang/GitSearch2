@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Serilog;
 using Utf8Json.AspNetCoreMvcFormatter;
 
 namespace GitSearch2.Server {
@@ -30,6 +31,9 @@ namespace GitSearch2.Server {
 			// Alternatively, we could use this branch: https://github.com/DSilence/Utf8Json/tree/feature/formatters
 			services.Configure<KestrelServerOptions>( options =>
 			{
+				options.AllowSynchronousIO = true;
+			} );
+			services.Configure<IISServerOptions>( options => {
 				options.AllowSynchronousIO = true;
 			} );
 
@@ -54,8 +58,7 @@ namespace GitSearch2.Server {
 
 		public void Configure(
 			IApplicationBuilder app,
-			IWebHostEnvironment env,
-			IServiceProvider serviceProvider
+			IWebHostEnvironment env
 		) {
 			app.UseResponseCompression();
 
@@ -65,6 +68,8 @@ namespace GitSearch2.Server {
 			}
 
 			app.UseClientSideBlazorFiles<Client.Startup>();
+
+			app.UseSerilogRequestLogging();
 
 			app.UseRouting();
 

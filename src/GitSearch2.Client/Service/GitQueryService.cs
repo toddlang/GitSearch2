@@ -29,11 +29,11 @@ namespace GitSearch2.Client.Service {
 			return int.Parse( content );
 		}
 
-		async Task<IEnumerable<CommitDetails>> IGitQueryService.GitQuery( string searchTerm, int startRecord ) {
+		async Task<GitQueryResponse> IGitQueryService.GitQuery( string searchTerm, int startRecord ) {
 			GitQuery request = new GitQuery( searchTerm, startRecord, 100 );
 			return await _http.PostJsonAsync( "/api/GitQuery/Search", request,
 				(r) => _json.Serialize( r ),
-				(s) => _json.Deserialize<CommitDetails[]>( s ));
+				(s) => _json.Deserialize<GitQueryResponse>( s ));
 		}
 	}
 }
