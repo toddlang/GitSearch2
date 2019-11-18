@@ -8,8 +8,8 @@ namespace GitSearch2.Repository {
 
 		UpdateSession GetUpdateSession( Guid session );
 
-		void Begin( Guid session, string repo, string project, DateTimeOffset started );
+		void Begin( Guid session, string repo, string project, DateTime started );
 
-		void End( Guid session, DateTimeOffset finished, int commitsWritten );
+		void End( Guid session, DateTime finished, int commitsWritten );
 	}
 }

@@ -10,7 +10,8 @@ namespace GitSearch2.Indexer {
 
 	internal class CommitWalker : ICommitWalker {
 
-		private const string PreHistoryId = "53ef49c5f0b2711409a7e295a2d515e70850415e";
+		internal const string PreHistoryId = "53ef49c5f0b2711409a7e295a2d515e70850415e";
+		internal const string MergePrNumberToken = "Merge pull request #";
 
 		private readonly INameParser _repoNameParser;
 		private readonly ICommitRepository _commitRepository;
@@ -40,20 +41,20 @@ namespace GitSearch2.Indexer {
 
 			_statistics = new Statistics( visited, toVisit );
 
-			LibGit2Sharp.Repository gitRepo = _gitRepoProvider.GetRepo();
+			IRepository gitRepo = _gitRepoProvider.GetRepo();
 			Remote remote = gitRepo.Network.Remotes.First();
 
 			RepoProjectName name = _repoNameParser.Parse( remote.Url );
 			Guid session = Guid.NewGuid();
-			_updateRepository.Begin( session, name.Repo, name.Project, DateTimeOffset.Now );
+			_updateRepository.Begin( session, name.Repo, name.Project, DateTime.Now );
 
 			// Short-circuit pre-history so that we never try to walk
 			// farther back than this point.
 			visited.Add( PreHistoryId );
 
-			Commit current = gitRepo.Commits.First();
+			Commit current = gitRepo.Commits.FirstOrDefault();
 
-			while( !current.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ) {
+			while( !current?.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ?? false ) {
 				int parentCount = current.Parents.Count();
 
 				// Skip it if we've already seen it, otherwise make a note
@@ -66,14 +67,16 @@ namespace GitSearch2.Indexer {
 					// master though, so we have no PR and no merge via.
 					if( parentCount == 1 ) {
 						_statistics.ProcessedCommit();
-						WriteCommit( gitRepo, current, name, "", Enumerable.Empty<string>() );
-					} else {
+						WriteCommit( current, name, "", Enumerable.Empty<string>() );
+					} else if( parentCount > 1 ) {
 
 						toVisit.Push( current.Sha );
+					} else {
+						// I have no idea what to do here
 					}
 				}
 
-				current = current.Parents.ElementAt( 0 );
+				current = current.Parents.FirstOrDefault();
 				_statisticsDisplay.UpdateStatistics( _statistics );
 
 				gitRepo = _gitRepoProvider.GetRepo( current, out current );
@@ -105,7 +108,7 @@ namespace GitSearch2.Indexer {
 				gitRepo = _gitRepoProvider.GetRepo();
 			}
 
-			_updateRepository.End( session, DateTimeOffset.Now, _statistics.Written );
+			_updateRepository.End( session, DateTime.Now, _statistics.Written );
 		}
 
 		/// <summary>
@@ -135,7 +138,7 @@ namespace GitSearch2.Indexer {
 		/// The target node being walked.
 		/// </param>
 		private void WalkMerge(
-			LibGit2Sharp.Repository gitRepo,
+			IRepository gitRepo,
 			List<string> mergeVia,
 			RepoProjectName name,
 			string prNumber,
@@ -160,7 +163,7 @@ namespace GitSearch2.Indexer {
 			if( parentCount == 1 ) {
 				// As single parent is a "real" commit and can be committed
 				// to the database
-				WriteCommit( gitRepo, target, name, prNumber, mergeVia );
+				WriteCommit( target, name, prNumber, mergeVia );
 
 				Commit current = target.Parents.First();
 				while( current != null && !visited.Contains( current.Sha ) && !current.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ) {
@@ -168,7 +171,7 @@ namespace GitSearch2.Indexer {
 					if( parentCount == 1 ) {
 						visited.Add( current.Sha );
 						_statistics.ProcessedCommit();
-						WriteCommit( gitRepo, current, name, prNumber, newMergeVia );
+						WriteCommit( current, name, prNumber, newMergeVia );
 					} else {
 						WalkMerge( gitRepo, newMergeVia, name, prNumber, visited, toVisit, current );
 					}
@@ -198,7 +201,6 @@ namespace GitSearch2.Indexer {
 		}
 
 		private void WriteCommit(
-			LibGit2Sharp.Repository gitRepo,
 			Commit commit,
 			RepoProjectName name,
 			string prNumber,
@@ -206,13 +208,12 @@ namespace GitSearch2.Indexer {
 		) {
 			if( !_commitRepository.ContainsCommit( commit.Sha, name.Project, name.Repo ) ) {
 				_statistics.WroteCommit();
-				CommitDetails commitInfo = CommitInfoFromCommit( gitRepo, commit, name.Project, name.Repo, prNumber, mergeVia );
+				CommitDetails commitInfo = CommitInfoFromCommit( commit, name.Project, name.Repo, prNumber, mergeVia );
 				_commitRepository.Add( commitInfo );
 			}
 		}
 
 		private CommitDetails CommitInfoFromCommit(
-			LibGit2Sharp.Repository gitRepo,
 			Commit commit,
 			string projectName,
 			string repoName,
@@ -226,8 +227,8 @@ namespace GitSearch2.Indexer {
 			var result = new CommitDetails(
 				authorEmail: commit.Author.Email,
 				authorName: commit.Author.Name,
-				commitId: commit.Id.ToString(),
-				date: commit.Committer.When.ToString( "yyyyMMddTHHmmssfffffffZ", CultureInfo.InvariantCulture ),
+				commitId: commit.Sha,
+				date: commit.Committer.When.ToUniversalTime().ToString( "yyyyMMddTHHmmssfffffffZ", CultureInfo.InvariantCulture ),
 				description: description,
 				files: files,
 				pr: prNumber,
@@ -241,7 +242,6 @@ namespace GitSearch2.Indexer {
 		}
 
 		private string GetPrNumber( Commit commit ) {
-			const string MergePrNumberToken = "Merge pull request #";
 			string prNumber = string.Empty;
 			if( commit.Message.StartsWith( MergePrNumberToken ) ) {
 				int prStart = commit.Message.IndexOf( MergePrNumberToken ) + MergePrNumberToken.Length;

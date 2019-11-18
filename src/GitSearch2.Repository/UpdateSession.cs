@@ -8,8 +8,8 @@ namespace GitSearch2.Repository
 			string session,
 			string repo,
 			string project,
-			DateTimeOffset started,
-			DateTimeOffset? finished,
+			DateTime started,
+			DateTime? finished,
 			int commitsWritten
 		) {
 			Session = session;
@@ -26,9 +26,9 @@ namespace GitSearch2.Repository
 
 		public string Project { get; }
 
-		public DateTimeOffset Started { get; }
+		public DateTime Started { get; }
 
-		public DateTimeOffset? Finished { get; }
+		public DateTime? Finished { get; }
 
 		public int? CommitsWritten { get; }
 	}

@@ -31,7 +31,7 @@ namespace GitSearch2.Indexer {
 		/// a certain number of operations we will recycle the Repository reference
 		/// and this seems to clear the problem.
 		/// </remarks>
-		LibGit2Sharp.Repository IGitRepoProvider.GetRepo() {
+		IRepository IGitRepoProvider.GetRepo() {
 			if( _gitRepo == null ) {
 				_gitRepo = new LibGit2Sharp.Repository( _options.GitFolder );
 				return _gitRepo;
@@ -64,7 +64,7 @@ namespace GitSearch2.Indexer {
 		/// a certain number of operations we will recycle the Repository reference
 		/// and this seems to clear the problem.
 		/// </remarks>
-		LibGit2Sharp.Repository IGitRepoProvider.GetRepo( Commit current, out Commit newCurrent ) {
+		IRepository IGitRepoProvider.GetRepo( Commit current, out Commit newCurrent ) {
 			if( _diffCalls >= DiffCycle ) {
 				ObjectId commitId = current?.Id;
 				_gitRepo.Dispose();

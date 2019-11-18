@@ -122,7 +122,7 @@ namespace GitSearch2.Repository.Sqlite {
 			string description = commit.Description.Any() ? commit.Description.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
 			string files = commit.Files.Any() ? commit.Files.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
 			string mergeCommits = commit.Commits.Any() ? commit.Commits.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
-			DateTimeOffset commitDate = DateTimeOffset.ParseExact( commit.Date, "yyyyMMddTHHmmssfffffffZ", CultureInfo.InvariantCulture );
+			DateTime commitDate = DateTime.ParseExact( commit.Date, "yyyyMMddTHHmmssfffffffZ", CultureInfo.InvariantCulture ).ToUniversalTime();
 
 			var parameters = new Dictionary<string, object>() {
 				{ "@commitId", commit.CommitId },

@@ -116,7 +116,7 @@ namespace GitSearch2.Repository.Sqlite {
 			Guid session,
 			string repo,
 			string project,
-			DateTimeOffset started
+			DateTime started
 		) {
 			string sql = @"
 				INSERT INTO GIT_UPDATE
@@ -147,7 +147,7 @@ namespace GitSearch2.Repository.Sqlite {
 
 		void IUpdateRepository.End(
 			Guid session,
-			DateTimeOffset finished,
+			DateTime finished,
 			int commitsWritten
 		) {
 			string sql = @"
@@ -197,8 +197,8 @@ namespace GitSearch2.Repository.Sqlite {
 			string dbSession = GetString( reader, "SESSION" );
 			string dbRepo = GetString( reader, "REPO" );
 			string dbProject = GetString( reader, "PROJECT" );
-			DateTimeOffset dbStarted = GetDateTimeOffset( reader, "STARTED" );
-			DateTimeOffset? dbFinished = GetNullableDateTimeOffset( reader, "FINISHED" );
+			DateTime dbStarted = GetDateTime( reader, "STARTED" );
+			DateTime? dbFinished = GetNullableDateTime( reader, "FINISHED" );
 			int dbCommitsWritten = GetInt( reader, "COMMITS_WRITTEN" );
 
 			return new UpdateSession( dbSession, dbRepo, dbProject, dbStarted, dbFinished, dbCommitsWritten );
