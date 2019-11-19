@@ -19,10 +19,10 @@ namespace GitSearch2.Indexer {
 					.AddSingleton( options )
 					.AddSingleton<ICommitWalker, CommitWalker>()
 					.AddSingleton<IStatisticsDisplay, StatisticsDisplay>()
-					.AddSingleton<INameParser, NameParser>()
+					.AddSingleton<INameParser, RemoteNameParser>()
 					.AddSingleton<ICommitRepository, CommitSqliteRepository>()
 					.AddSingleton<IUpdateRepository, UpdateSqliteRepository>()
-					.AddSingleton<IGitRepoProvider, GitRepoProvider>()
+					.AddSingleton<IGitRepoProvider, CyclingGitRepoProvider>()
 					.BuildServiceProvider();
 
 				  services.InitializeRepositories();

@@ -61,6 +61,19 @@ namespace GitSearch2.Repository.Sqlite {
 			throw new InvalidOperationException();
 		}
 
+		int ICommitRepository.CountCommits() {
+			string sql = @"
+				SELECT
+					COUNT(*)
+				FROM
+					GIT_COMMIT
+			;";
+
+			var parameters = new Dictionary<string, object>();
+
+			return ExecuteSingleReader( sql, parameters, LoadInt );
+		}
+
 		IEnumerable<CommitDetails> ICommitRepository.Search( string term, int limit ) {
 			string sql = @"
 				SELECT 

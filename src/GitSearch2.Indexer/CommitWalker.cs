@@ -42,9 +42,8 @@ namespace GitSearch2.Indexer {
 			_statistics = new Statistics( visited, toVisit );
 
 			IRepository gitRepo = _gitRepoProvider.GetRepo();
-			Remote remote = gitRepo.Network.Remotes.First();
 
-			RepoProjectName name = _repoNameParser.Parse( remote.Url );
+			RepoProjectName name = _repoNameParser.Parse( gitRepo );
 			Guid session = Guid.NewGuid();
 			_updateRepository.Begin( session, name.Repo, name.Project, DateTime.Now );
 

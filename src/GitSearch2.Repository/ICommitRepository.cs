@@ -11,5 +11,7 @@ namespace GitSearch2.Repository {
 		bool ContainsCommit( string commitId, string project, string repo );
 
 		void Add( CommitDetails commit );
+
+		int CountCommits();
 	}
 }

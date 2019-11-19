@@ -4,7 +4,7 @@ using System.Linq;
 using LibGit2Sharp;
 
 namespace GitSearch2.Indexer {
-	internal sealed class GitRepoProvider: IGitRepoProvider {
+	internal sealed class CyclingGitRepoProvider: IGitRepoProvider {
 
 		private const int DiffCycle = 1000;
 
@@ -12,7 +12,7 @@ namespace GitSearch2.Indexer {
 		private LibGit2Sharp.Repository _gitRepo;
 		private int _diffCalls;
 
-		public GitRepoProvider(
+		public CyclingGitRepoProvider(
 			Options options
 		) {
 			_options = options;

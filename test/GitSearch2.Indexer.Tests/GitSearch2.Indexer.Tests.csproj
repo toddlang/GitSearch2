@@ -14,10 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Integration\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\src\GitSearch2.Indexer\GitSearch2.Indexer.csproj" />
     <ProjectReference Include="..\..\src\GitSearch2.Repository\GitSearch2.Repository.csproj" />
     <ProjectReference Include="..\..\src\GitSearch2.Shared\GitSearch2.Shared.csproj" />

@@ -1,6 +1,11 @@
+using System.Linq;
+using LibGit2Sharp;
+
 namespace GitSearch2.Indexer {
-	internal sealed class NameParser : INameParser {
-		RepoProjectName INameParser.Parse( string remoteUrl ) {
+	internal sealed class RemoteNameParser : INameParser {
+		RepoProjectName INameParser.Parse( IRepository repository ) {
+			string remoteUrl = repository.Network.Remotes.First().Url;
+
 			int repoNameStart = remoteUrl.LastIndexOf( @"/" ) + 1;
 			int repoNameEnd = remoteUrl.IndexOf( ".git" );
 			string repoName = remoteUrl.Substring( repoNameStart, repoNameEnd - repoNameStart );

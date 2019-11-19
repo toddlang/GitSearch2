@@ -34,7 +34,7 @@ namespace GitSearch2.Server.Controllers {
 				IEnumerable<CommitDetails> result = _commit.Search( query.SearchTerm, query.MaximumRecords );
 
 				if( result == default ) {
-					return Ok( new GitQueryResponse( Enumerable.Empty<CommitDetails>(), "Null search result." ) );
+					return new StatusCodeResult( 500 );
 				}
 
 				return Ok( new GitQueryResponse( result, "" ) );

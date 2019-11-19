@@ -273,7 +273,7 @@ namespace GitSearch2.Indexer.Tests.Unit {
 		private static void SetupNameParser( Mock<INameParser> nameParser ) {
 			var repoProjectName = new RepoProjectName( RepoName, ProjectName );
 			nameParser
-				.Setup( np => np.Parse( RepoUrl ) )
+				.Setup( np => np.Parse( It.IsAny<IRepository>() ) )
 				.Returns( repoProjectName );
 		}
 
