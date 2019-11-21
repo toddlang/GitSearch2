@@ -36,7 +36,9 @@ namespace GitSearch2.Client.Pages {
 		}
 
 		public async Task TriggerSearch( EventArgs _ ) {
-			await PerformSearch( SearchTerm );
+			if( !string.IsNullOrWhiteSpace( SearchTerm ) ) {
+				await PerformSearch( SearchTerm );
+			}
 		}
 
 		private async Task PerformSearch( string searchTerm ) {
