@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using GitSearch2.Repository;
 using GitSearch2.Shared;
 using Microsoft.AspNetCore.Mvc;
@@ -24,14 +25,14 @@ namespace GitSearch2.Server.Controllers {
 
 		[HttpPost( "[action]" )]
 		[ResponseCache( Duration = 0, Location = ResponseCacheLocation.None, NoStore = true )]
-		public ActionResult<GitQueryResponse> Search( [FromBody] GitQuery query ) {
+		public async Task<ActionResult<GitQueryResponse>> SearchAsync( [FromBody] GitQuery query ) {
 
 			if (query == default) {
 				return BadRequest();
 			}
 
 			try {
-				IEnumerable<CommitDetails> result = _commit.Search( query.SearchTerm, query.MaximumRecords );
+				IEnumerable<CommitDetails> result = await _commit.SearchAsync( query.SearchTerm, query.MaximumRecords );
 
 				if( result == default ) {
 					return new StatusCodeResult( 500 );
@@ -39,12 +40,16 @@ namespace GitSearch2.Server.Controllers {
 
 				return Ok( new GitQueryResponse( result, "" ) );
 
+// We suppress this here since we want to control how the response is generated
+// in the case of an unknown exception.
+#pragma warning disable CA1031 // Do not catch general exception types
 			} catch (Exception ex) {
 
 				_logger.LogError( ex, "Error performing query." );
 
 				return Ok( new GitQueryResponse( Enumerable.Empty<CommitDetails>(), ex.Message ) );
 			}
+#pragma warning restore CA1031 // Do not catch general exception types
 
 		}
 	}

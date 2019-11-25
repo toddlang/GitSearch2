@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using GitSearch2.Repository;
 using GitSearch2.Server.Controllers;
 using GitSearch2.Shared;
@@ -30,33 +31,33 @@ namespace GitSearch2.Server.Tests.Unit
 		}
 
 		[Test]
-		public void Search_NullRequest_ReturnsBadRequest() {
-			ActionResult<GitQueryResponse> response = _gitQueryController.Search( null );
+		public async Task Search_NullRequest_ReturnsBadRequest() {
+			ActionResult<GitQueryResponse> response = await _gitQueryController.SearchAsync( null );
 
 			Assert.IsInstanceOf<BadRequestResult>( response.Result );
 		}
 
 		[Test]
-		public void Search_ValidRequest_ReturnsOk() {
+		public async Task Search_ValidRequest_ReturnsOk() {
 			GitQuery query = new GitQuery( "term", 0, 1 );
 			var commits = new List<CommitDetails>();
 			_commitRepository
 				.Setup( cr => cr.Search( "term", 1 ) )
 				.Returns( commits );
-			ActionResult<GitQueryResponse> response = _gitQueryController.Search( query );
+			ActionResult<GitQueryResponse> response = await _gitQueryController.SearchAsync( query );
 
 			Assert.IsInstanceOf<OkObjectResult>( response.Result );
 
 		}
 
 		[Test]
-		public void Search_ValidRequestNullResult_Returns500() {
+		public async Task Search_ValidRequestNullResult_Returns500() {
 			GitQuery query = new GitQuery( "term", 0, 1 );
 			var commits = new List<CommitDetails>();
 			_commitRepository
 				.Setup( cr => cr.Search( "term", 1 ) )
 				.Returns( default(IEnumerable<CommitDetails>) );
-			ActionResult<GitQueryResponse> response = _gitQueryController.Search( query );
+			ActionResult<GitQueryResponse> response = await _gitQueryController.SearchAsync( query );
 
 			Assert.IsInstanceOf<StatusCodeResult>( response.Result );
 			StatusCodeResult result = (StatusCodeResult)response.Result;

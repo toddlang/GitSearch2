@@ -32,11 +32,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{819D13
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{9F5A4E64-3C9A-4DB9-859C-295219A8BCC5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitSearch2.Shared.Tests", "test\GitSearch2.Shared.Tests\GitSearch2.Shared.Tests.csproj", "{F2AAE6AE-8FB8-4B13-92EE-492EE8AB7947}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitSearch2.Shared.Tests", "test\GitSearch2.Shared.Tests\GitSearch2.Shared.Tests.csproj", "{F2AAE6AE-8FB8-4B13-92EE-492EE8AB7947}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitSearch2.Repository.Tests", "test\GitSearch2.Repository.Tests\GitSearch2.Repository.Tests.csproj", "{7AC34812-3291-42BF-AEA3-36B332BA36B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitSearch2.Repository.Tests", "test\GitSearch2.Repository.Tests\GitSearch2.Repository.Tests.csproj", "{7AC34812-3291-42BF-AEA3-36B332BA36B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitSearch2.Indexer.Tests", "test\GitSearch2.Indexer.Tests\GitSearch2.Indexer.Tests.csproj", "{E763F288-E7B4-4753-88A5-88494F988D6B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitSearch2.Indexer.Tests", "test\GitSearch2.Indexer.Tests\GitSearch2.Indexer.Tests.csproj", "{E763F288-E7B4-4753-88A5-88494F988D6B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitSearch2.Repository.SqlServer", "src\GitSearch2.Repository.SqlServer\GitSearch2.Repository.SqlServer.csproj", "{FEB7207F-A17F-4CB6-A669-9BC485EC150D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -84,6 +86,10 @@ Global
 		{E763F288-E7B4-4753-88A5-88494F988D6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E763F288-E7B4-4753-88A5-88494F988D6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E763F288-E7B4-4753-88A5-88494F988D6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEB7207F-A17F-4CB6-A669-9BC485EC150D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEB7207F-A17F-4CB6-A669-9BC485EC150D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEB7207F-A17F-4CB6-A669-9BC485EC150D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEB7207F-A17F-4CB6-A669-9BC485EC150D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -101,6 +107,7 @@ Global
 		{F2AAE6AE-8FB8-4B13-92EE-492EE8AB7947} = {54EA06FD-F14A-456E-A130-23E52D3BFE87}
 		{7AC34812-3291-42BF-AEA3-36B332BA36B2} = {54EA06FD-F14A-456E-A130-23E52D3BFE87}
 		{E763F288-E7B4-4753-88A5-88494F988D6B} = {54EA06FD-F14A-456E-A130-23E52D3BFE87}
+		{FEB7207F-A17F-4CB6-A669-9BC485EC150D} = {9F5A4E64-3C9A-4DB9-859C-295219A8BCC5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {202C91B6-5024-47C8-B3C7-53CEB364FD79}

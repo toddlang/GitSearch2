@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using GitSearch2.Shared;
 using Microsoft.Extensions.Options;
 
@@ -45,13 +46,30 @@ namespace GitSearch2.Repository.Sqlite {
 			ExecuteNonQuery( sql );
 
 			sql = @"
-				CREATE INDEX IDX_COMMIT_ID ON GIT_COMMIT (COMMIT_ID, PROJECT, REPO);
+				CREATE INDEX
+					IDX_COMMIT_ID
+				ON
+					GIT_COMMIT (
+						COMMIT_ID,
+						PROJECT,
+						REPO
+					)
 			;";
 
 			ExecuteNonQuery( sql );
 
 			sql = @"
-				CREATE VIRTUAL TABLE SEARCHABLE_COMMIT USING FTS4(COMMIT_ID, PROJECT, REPO, DESCRIPTION, AUTHOR_NAME, AUTHOR_EMAIL, FILES, MERGE_COMMITS, tokenize=unicode61 ""tokenchars=_."");
+				CREATE VIRTUAL TABLE SEARCHABLE_COMMIT USING FTS4(
+					COMMIT_ID,
+					PROJECT,
+					REPO,
+					DESCRIPTION,
+					AUTHOR_NAME,
+					AUTHOR_EMAIL,
+					FILES,
+					MERGE_COMMITS,
+					tokenize=unicode61 ""tokenchars=_.""
+				)
 			;";
 
 			ExecuteNonQuery( sql );
@@ -72,6 +90,19 @@ namespace GitSearch2.Repository.Sqlite {
 			var parameters = new Dictionary<string, object>();
 
 			return ExecuteSingleReader( sql, parameters, LoadInt );
+		}
+
+		async Task<int> ICommitRepository.CountCommitsAsync() {
+			string sql = @"
+				SELECT
+					COUNT(*)
+				FROM
+					GIT_COMMIT
+			;";
+
+			var parameters = new Dictionary<string, object>();
+
+			return await ExecuteSingleReaderAsync( sql, parameters, LoadInt );
 		}
 
 		IEnumerable<CommitDetails> ICommitRepository.Search( string term, int limit ) {
@@ -108,6 +139,40 @@ namespace GitSearch2.Repository.Sqlite {
 			return ExecuteReader( sql, parameters, ReadCommit );
 		}
 
+		async Task<IEnumerable<CommitDetails>> ICommitRepository.SearchAsync( string term, int limit ) {
+			string sql = @"
+				SELECT 
+					GC.COMMIT_ID,
+					GC.PROJECT,
+					GC.REPO,
+					GC.DESCRIPTION,
+					GC.AUTHOR_EMAIL,
+					GC.AUTHOR_NAME,
+					GC.COMMIT_DATE,
+					GC.FILES,
+					GC.PR_NUMBER,
+					GC.MERGE_COMMITS
+				FROM 
+					GIT_COMMIT AS GC
+					INNER JOIN SEARCHABLE_COMMIT AS SC
+						ON GC.COMMIT_ID = SC.COMMIT_ID
+						AND GC.REPO = SC.REPO
+						AND GC.PROJECT = SC.PROJECT
+				WHERE 
+					SEARCHABLE_COMMIT MATCH @term
+				ORDER BY
+					GC.COMMIT_DATE DESC
+				LIMIT @limit
+			;";
+
+			var parameters = new Dictionary<string, object>() {
+				{ "@term", term },
+				{ "@limit", limit }
+			};
+
+			return await ExecuteReaderAsync( sql, parameters, ReadCommit );
+		}
+
 		bool ICommitRepository.ContainsCommit( string commitId, string project, string repo ) {
 			string sql = @"
 				SELECT
@@ -127,6 +192,33 @@ namespace GitSearch2.Repository.Sqlite {
 			};
 
 			int hasRow = ExecuteSingleReader( sql, parameters, LoadInt );
+
+			return ( hasRow == 1 );
+		}
+
+		async Task<bool> ICommitRepository.ContainsCommitAsync(
+			string commitId,
+			string project,
+			string repo
+		) {
+			string sql = @"
+				SELECT
+					1
+				FROM
+					GIT_COMMIT
+				WHERE
+					COMMIT_ID = @commitId
+					AND PROJECT = @project
+					AND REPO = @repo
+			;";
+
+			var parameters = new Dictionary<string, object>() {
+				{ "@commitId", commitId },
+				{ "@project", project },
+				{ "@repo", repo }
+			};
+
+			int hasRow = await ExecuteSingleReaderAsync( sql, parameters, LoadInt );
 
 			return ( hasRow == 1 );
 		}
@@ -207,6 +299,84 @@ namespace GitSearch2.Repository.Sqlite {
 			;";
 
 			ExecuteNonQuery( sql, parameters );
+		}
+
+		async Task ICommitRepository.AddAsync( CommitDetails commit ) {
+			string description = commit.Description.Any() ? commit.Description.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
+			string files = commit.Files.Any() ? commit.Files.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
+			string mergeCommits = commit.Commits.Any() ? commit.Commits.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
+			DateTime commitDate = DateTime.ParseExact( commit.Date, "yyyyMMddTHHmmssfffffffZ", CultureInfo.InvariantCulture ).ToUniversalTime();
+
+			var parameters = new Dictionary<string, object>() {
+				{ "@commitId", commit.CommitId },
+				{ "@description", description },
+				{ "@repo", commit.Repo },
+				{ "@authorEmail", commit.AuthorEmail },
+				{ "@authorName", commit.AuthorName },
+				{ "@commitDate", ToText(commitDate) },
+				{ "@files", files },
+				{ "@project", commit.Project },
+				{ "@prNumber", commit.PR },
+				{ "@mergeCommits", mergeCommits }
+			};
+
+			string sql = @"
+				INSERT INTO GIT_COMMIT 
+				(
+					COMMIT_ID,
+					PROJECT,
+					REPO,
+					DESCRIPTION,
+					AUTHOR_EMAIL,
+					AUTHOR_NAME,
+					COMMIT_DATE,
+					FILES,
+					PR_NUMBER,
+					MERGE_COMMITS
+				)
+				VALUES
+				(
+					@commitId,
+					@project,
+					@repo,
+					@description,
+					@authorEmail,
+					@authorName,
+					@commitDate,
+					@files,
+					@prNumber,
+					@mergeCommits
+				)
+			;";
+
+			await ExecuteNonQueryAsync( sql, parameters );
+
+			sql = @"
+				INSERT INTO SEARCHABLE_COMMIT
+				(
+					COMMIT_ID,
+					PROJECT,
+					REPO,
+					DESCRIPTION,
+					AUTHOR_NAME,
+					AUTHOR_EMAIL,
+					FILES,
+					MERGE_COMMITS
+				)
+				VALUES
+				(
+					@commitId,
+					@project,
+					@repo,
+					@description,
+					@authorName,
+					@authorEmail,
+					@files,
+					@mergeCommits
+				)
+			;";
+
+			await ExecuteNonQueryAsync( sql, parameters );
 		}
 
 		private CommitDetails ReadCommit( DbDataReader reader ) {

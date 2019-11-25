@@ -1,18 +1,24 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using Microsoft.Data.Sqlite;
+using System.Data.SqlClient;
 using System.Threading.Tasks;
 
-namespace GitSearch2.Repository.Sqlite {
-
-	public class SqliteRepository {
+namespace GitSearch2.Repository.SqlServer {
+	public class SqlServerRepository {
 #pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
+
 		private readonly string _connectionString;
 
-		public SqliteRepository( SqliteOptions options ) {
-			if( string.IsNullOrWhiteSpace( options.ConnectionString ) ) {
-				throw new ArgumentException( nameof( options ) );
+		public SqlServerRepository(
+			SqlServerOptions options
+		) {
+			if (options is null) {
+				throw new ArgumentNullException( nameof( options ) );
+			}
+
+			if (string.IsNullOrWhiteSpace(options.ConnectionString)) {
+				throw new ArgumentException( options.ConnectionString );
 			}
 
 			_connectionString = options.ConnectionString;
@@ -93,7 +99,8 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		public async Task ExecuteNonQueryAsync( string sql ) {
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				await connection.OpenAsync();
 
 				await PerformNonQueryAsync( connection, sql );
@@ -103,7 +110,8 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		public void ExecuteNonQuery( string sql ) {
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				connection.Open();
 
 				PerformNonQuery( connection, sql );
@@ -116,7 +124,7 @@ namespace GitSearch2.Repository.Sqlite {
 			string sql,
 			IDictionary<string, object> parameters
 		) {
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				await connection.OpenAsync();
 
 				await PerformNonQueryAsync( connection, sql, parameters );
@@ -129,7 +137,7 @@ namespace GitSearch2.Repository.Sqlite {
 			string sql,
 			IDictionary<string, object> parameters
 		) {
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				connection.Open();
 
 				PerformNonQuery( connection, sql, parameters );
@@ -143,7 +151,8 @@ namespace GitSearch2.Repository.Sqlite {
 			Func<DbDataReader, T> loader
 		) {
 			IEnumerable<T> result;
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				await connection.OpenAsync();
 
 				result = await PerformReaderAsync( connection, sql, loader );
@@ -159,7 +168,7 @@ namespace GitSearch2.Repository.Sqlite {
 		) {
 			IEnumerable<T> result;
 
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				connection.Open();
 
 				result = PerformReader( connection, sql, loader );
@@ -176,7 +185,7 @@ namespace GitSearch2.Repository.Sqlite {
 		) {
 			var result = default( IEnumerable<T> );
 
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				await connection.OpenAsync();
 
 				result = await PerformReaderAsync( connection, sql, parameters, loader );
@@ -194,7 +203,7 @@ namespace GitSearch2.Repository.Sqlite {
 		) {
 			var result = default( IEnumerable<T> );
 
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				connection.Open();
 
 				result = PerformReader( connection, sql, parameters, loader );
@@ -212,7 +221,7 @@ namespace GitSearch2.Repository.Sqlite {
 		) {
 			T result = default;
 
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				await connection.OpenAsync();
 
 				result = await PerformSingleReaderAsync( connection, sql, parameters, loader );
@@ -230,7 +239,7 @@ namespace GitSearch2.Repository.Sqlite {
 		) {
 			T result = default;
 
-			using( var connection = new SqliteConnection( _connectionString ) ) {
+			using( var connection = new SqlConnection( _connectionString ) ) {
 				connection.Open();
 
 				result = PerformSingleReader( connection, sql, parameters, loader );
@@ -319,10 +328,10 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private async Task PerformNonQueryAsync(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql
 		) {
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 
 				await command.ExecuteNonQueryAsync();
@@ -330,10 +339,10 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private void PerformNonQuery(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql
 		) {
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 
 				command.ExecuteNonQuery();
@@ -341,11 +350,11 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private async Task PerformNonQueryAsync(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters
 		) {
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 				foreach( string key in parameters.Keys ) {
 					command.Parameters.AddWithValue( key, parameters[key] );
@@ -356,11 +365,11 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private void PerformNonQuery(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters
 		) {
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 				foreach( string key in parameters.Keys ) {
 					command.Parameters.AddWithValue( key, parameters[key] );
@@ -371,12 +380,12 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private async Task<IEnumerable<T>> PerformReaderAsync<T>(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql,
 			Func<DbDataReader, T> loader
 		) {
 			var result = new List<T>();
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 
 				using( DbDataReader reader = await command.ExecuteReaderAsync() ) {
@@ -393,15 +402,15 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private IEnumerable<T> PerformReader<T>(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql,
 			Func<DbDataReader, T> loader
 		) {
 			var result = new List<T>();
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 
-				using( SqliteDataReader reader = command.ExecuteReader() ) {
+				using( SqlDataReader reader = command.ExecuteReader() ) {
 					if( reader.HasRows ) {
 						while( reader.Read() ) {
 							result.Add( loader( reader ) );
@@ -415,14 +424,14 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private async Task<IEnumerable<T>> PerformReaderAsync<T>(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters,
 			Func<DbDataReader, T> loader
 		) {
 			var result = new List<T>();
 
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 				foreach( string key in parameters.Keys ) {
 					command.Parameters.AddWithValue( key, parameters[key] );
@@ -443,20 +452,20 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private IEnumerable<T> PerformReader<T>(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters,
 			Func<DbDataReader, T> loader
 		) {
 			var result = new List<T>();
 
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 				foreach( string key in parameters.Keys ) {
 					command.Parameters.AddWithValue( key, parameters[key] );
 				}
 
-				using( SqliteDataReader reader = command.ExecuteReader() ) {
+				using( SqlDataReader reader = command.ExecuteReader() ) {
 					if( reader.HasRows ) {
 						while( reader.Read() ) {
 							result.Add( loader( reader ) );
@@ -471,14 +480,14 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private async Task<T> PerformSingleReaderAsync<T>(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters,
 			Func<DbDataReader, T> loader
 		) {
 			T result = default;
 
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 				foreach( string key in parameters.Keys ) {
 					command.Parameters.AddWithValue( key, parameters[key] );
@@ -498,20 +507,20 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private T PerformSingleReader<T>(
-			SqliteConnection connection,
+			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters,
 			Func<DbDataReader, T> loader
 		) {
 			T result = default;
 
-			using( SqliteCommand command = connection.CreateCommand() ) {
+			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 				foreach( string key in parameters.Keys ) {
 					command.Parameters.AddWithValue( key, parameters[key] );
 				}
 
-				using( SqliteDataReader reader = command.ExecuteReader() ) {
+				using( SqlDataReader reader = command.ExecuteReader() ) {
 					if( reader.HasRows ) {
 						if( reader.Read() ) {
 							result = loader( reader );
@@ -523,7 +532,6 @@ namespace GitSearch2.Repository.Sqlite {
 
 			return result;
 		}
-
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+#pragma warning restore CA2100
 	}
 }
