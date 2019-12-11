@@ -36,78 +36,98 @@ namespace GitSearch2.Indexer {
 		}
 
 		void ICommitWalker.Run() {
-			HashSet<string> visited = new HashSet<string>();
-			Stack<string> toVisit = new Stack<string>();
 
-			_statistics = new Statistics( visited, toVisit );
+			RepoProjectName name;
 
-			IRepository gitRepo = _gitRepoProvider.GetRepo();
+			do {
+				HashSet<string> visited = new HashSet<string>();
+				Stack<string> toVisit = new Stack<string>();
 
-			RepoProjectName name = _repoNameParser.Parse( gitRepo );
-			Guid session = Guid.NewGuid();
-			_updateRepository.Begin( session, name.Repo, name.Project, DateTime.Now );
+				_statistics = new Statistics( visited, toVisit );
 
-			// Short-circuit pre-history so that we never try to walk
-			// farther back than this point.
-			visited.Add( PreHistoryId );
+				IRepository gitRepo = _gitRepoProvider.GetRepo();
 
-			Commit current = gitRepo.Commits.FirstOrDefault();
+				name = _repoNameParser.Parse( gitRepo );
+				Guid session = Guid.NewGuid();
 
-			while( !current?.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ?? false ) {
-				int parentCount = current.Parents.Count();
-
-				// Skip it if we've already seen it, otherwise make a note
-				// that we're visiting it.
-				if( !visited.Contains( current.Sha ) ) {
-					visited.Add( current.Sha );
-
-					// If it has one parent, it's a "real" commit and needs
-					// to be written to the DB.   It's a direct commit to
-					// master though, so we have no PR and no merge via.
-					if( parentCount == 1 ) {
-						_statistics.ProcessedCommit();
-						WriteCommit( current, name, "", Enumerable.Empty<string>() );
-					} else if( parentCount > 1 ) {
-
-						toVisit.Push( current.Sha );
+				UpdateSession scheduledSession = _updateRepository.GetScheduledUpdate( name.Repo, name.Project );
+				if( _updateRepository.UpdateInProgress( name.Repo, name.Project ) ) {
+					if( scheduledSession is null ) {
+						_updateRepository.ScheduleUpdate( session, name.Repo, name.Project );
+					}
+					return;
+				} else {
+					if( scheduledSession is null ) {
+						_updateRepository.Begin( session, name.Repo, name.Project, DateTime.Now );
 					} else {
-						// I have no idea what to do here
+						session = new Guid( scheduledSession.Session );
+						_updateRepository.Resume( session, DateTime.Now );
 					}
 				}
 
-				current = current.Parents.FirstOrDefault();
-				_statisticsDisplay.UpdateStatistics( _statistics );
+				// Short-circuit pre-history so that we never try to walk
+				// farther back than this point.
+				visited.Add( PreHistoryId );
 
-				gitRepo = _gitRepoProvider.GetRepo( current, out current );
-			}
+				Commit current = gitRepo.Commits.FirstOrDefault();
 
-			// Now we run through every commit that we "skipped" in the previous pass
-			while( toVisit.Any() ) {
-				current = gitRepo.Lookup<Commit>( toVisit.Pop() );
-				_statistics.ProcessedCommit();
+				while( !current?.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ?? false ) {
+					int parentCount = current.Parents.Count();
 
-				var mergeVia = new List<string>() {
-					current.Sha
-				};
-				string prNumber = GetPrNumber( current );
+					// Skip it if we've already seen it, otherwise make a note
+					// that we're visiting it.
+					if( !visited.Contains( current.Sha ) ) {
+						visited.Add( current.Sha );
 
-				foreach( Commit target in current.Parents ) {
-					if( !visited.Contains( target.Sha ) && !target.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ) {
-						_statistics.ProcessedCommit();
-						if( !IsMergeInto( target ) ) {
-							WalkMerge( gitRepo, mergeVia, name, prNumber, visited, toVisit, target );
+						// If it has one parent, it's a "real" commit and needs
+						// to be written to the DB.   It's a direct commit to
+						// master though, so we have no PR and no merge via.
+						if( parentCount == 1 ) {
+							_statistics.ProcessedCommit();
+							WriteCommit( current, name, "", Enumerable.Empty<string>() );
+						} else if( parentCount > 1 ) {
+
+							toVisit.Push( current.Sha );
 						} else {
-							visited.Add( target.Sha );
+							// I have no idea what to do here
 						}
 					}
+
+					current = current.Parents.FirstOrDefault();
+					_statisticsDisplay.UpdateStatistics( _statistics );
+
+					gitRepo = _gitRepoProvider.GetRepo( current, out current );
 				}
 
-				_statisticsDisplay.UpdateStatistics( _statistics );
+				// Now we run through every commit that we "skipped" in the previous pass
+				while( toVisit.Any() ) {
+					current = gitRepo.Lookup<Commit>( toVisit.Pop() );
+					_statistics.ProcessedCommit();
 
-				gitRepo = _gitRepoProvider.GetRepo();
-			}
+					var mergeVia = new List<string>() {
+					current.Sha
+				};
+					string prNumber = GetPrNumber( current );
 
-			_updateRepository.End( session, DateTime.Now, _statistics.Written );
+					foreach( Commit target in current.Parents ) {
+						if( !visited.Contains( target.Sha ) && !target.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ) {
+							_statistics.ProcessedCommit();
+							if( !IsMergeInto( target ) ) {
+								WalkMerge( gitRepo, mergeVia, name, prNumber, visited, toVisit, target );
+							} else {
+								visited.Add( target.Sha );
+							}
+						}
+					}
+
+					_statisticsDisplay.UpdateStatistics( _statistics );
+
+					gitRepo = _gitRepoProvider.GetRepo();
+				}
+
+				_updateRepository.End( session, DateTime.Now, _statistics.Written );
+
+			} while( _updateRepository.GetScheduledUpdate( name.Repo, name.Project ) != null );
 		}
 
 		/// <summary>

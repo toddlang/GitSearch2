@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 namespace GitSearch2.Repository.Sqlite {
 	public sealed class UpdateSqliteRepository : SqliteRepository, IUpdateRepository {
 
+		private readonly Dictionary<string, object> NoParameters = new Dictionary<string, object>();
+
 		private const string SchemaId = "15c8b53ab898475497ad37cf968b93aa";
 		private const int TargetSchema = 2;
 
@@ -28,7 +30,7 @@ namespace GitSearch2.Repository.Sqlite {
 					SESSION NVARCHAR(32) NOT NULL,
 					PROJECT NVARCHAR(128) NOT NULL,
 					REPO NVARCHAR(128) NOT NULL,
-					STARTED TEXT NOT NULL,
+					STARTED TEXT,
 					FINISHED TEXT,
 					COMMITS_WRITTEN INT,
 					PRIMARY KEY(SESSION, PROJECT, REPO)
@@ -39,53 +41,7 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		protected override void UpdateSchema( int targetSchema ) {
-			switch (targetSchema) {
-				case 2: {
-						string sql = @"
-							ALTER TABLE
-								GIT_UPDATE
-							RENAME TO GIT_UPDATE_OLD
-						;";
-						ExecuteNonQuery( sql );
-
-						sql = @"
-							CREATE TABLE GIT_UPDATE
-							(
-								SESSION NVARCHAR(32) NOT NULL,
-								PROJECT NVARCHAR(128) NOT NULL,
-								REPO NVARCHAR(128) NOT NULL,
-								STARTED TEXT NOT NULL,
-								FINISHED TEXT,
-								COMMITS_WRITTEN INT,
-								PRIMARY KEY(SESSION, PROJECT, REPO)
-							)
-						;";
-
-						ExecuteNonQuery( sql );
-
-						sql = @"
-							INSERT INTO GIT_UPDATE
-								(SESSION, PROJECT, REPO, STARTED, FINISHED)
-							SELECT
-								SESSION,
-								PROJECT,
-								REPO,
-								STARTED,
-								FINISHED
-							FROM
-								GIT_UPDATE_OLD
-						;";
-
-						ExecuteNonQuery( sql );
-
-						sql = @"
-							DROP TABLE GIT_UPDATE_OLD
-						;";
-
-						ExecuteNonQuery( sql );
-					}
-					break;
-			}
+			throw new InvalidOperationException();
 		}
 
 		UpdateSession IUpdateRepository.GetUpdateSession(
@@ -145,6 +101,26 @@ namespace GitSearch2.Repository.Sqlite {
 			ExecuteNonQuery( sql, parameters );
 		}
 
+		void IUpdateRepository.Resume(
+			Guid session,
+			DateTime started
+		) {
+			string sql = @"
+				UPDATE GIT_UPDATE
+				SET
+					STARTED = @started
+				WHERE
+					SESSION = @session
+			;";
+
+			var parameters = new Dictionary<string, object>() {
+				{ "@session", session.ToString("N") },
+				{ "@started", ToText(started) }
+			};
+
+			ExecuteNonQuery( sql, parameters );
+		}
+
 		void IUpdateRepository.End(
 			Guid session,
 			DateTime finished,
@@ -187,11 +163,86 @@ namespace GitSearch2.Repository.Sqlite {
 				)
 			;";
 
+			return ExecuteSingleReader( sql, NoParameters, LoadDateTimeOffset );
+		}
+
+		bool IUpdateRepository.UpdateInProgress( string repo, string project ) {
+			string sql = @"
+				SELECT
+					COUNT(*)
+				FROM
+					GIT_UPDATE
+				WHERE
+					FINISHED IS NULL
+					AND REPO = @repo
+					AND PROJECT = @project
+			";
+
 			var parameters = new Dictionary<string, object>() {
+				{ "@repo", repo },
+				{ "@project", project }
 			};
 
-			return ExecuteSingleReader( sql, parameters, LoadDateTimeOffset );
+			int count = ExecuteSingleReader( sql, parameters, LoadInt );
+			return ( count > 0 );
 		}
+
+		UpdateSession IUpdateRepository.GetScheduledUpdate( string repo, string project ) {
+			string sql = @"
+				SELECT
+					SESSION,
+					PROJECT,
+					REPO,
+					STARTED,
+					FINISHED,
+					COMMITS_WRITTEN
+				FROM
+					GIT_UPDATE
+				WHERE
+					STARTED IS NULL
+					AND REPO = @repo
+					AND PROJECT = @project
+			";
+
+			var parameters = new Dictionary<string, object>() {
+				{ "@repo", repo },
+				{ "@project", project }
+			};
+
+			return ExecuteSingleReader( sql, parameters, ReadProgress );
+		}
+
+		UpdateSession IUpdateRepository.ScheduleUpdate(
+			Guid session,
+			string repo,
+			string project
+		) {
+			string sql = @"
+				INSERT INTO GIT_UPDATE
+				(
+					SESSION,
+					PROJECT,
+					REPO
+				)
+				VALUES
+				(
+					@session,
+					@project,
+					@repo
+				)
+			;";
+
+			var parameters = new Dictionary<string, object>() {
+				{ "@session", session.ToString("N") },
+				{ "@project", project },
+				{ "@repo", repo }
+			};
+
+			ExecuteNonQuery( sql, parameters );
+
+			return new UpdateSession( session.ToString("N"), repo, project, null, null, 0 );
+		}
+
 
 		private UpdateSession ReadProgress( DbDataReader reader ) {
 			string dbSession = GetString( reader, "SESSION" );
