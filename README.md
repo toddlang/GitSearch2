@@ -20,3 +20,8 @@ GitSearch2.Indexer.exe --input c:\d2l\instances\dev2\checkout\.git --pause true 
 ```
 
 The web server uses `appsettings.json` to control which database is used.
+
+### Notes
+
+The indexer can be run multiple times.  When the indexer runs it will attempt to determine if an indexing is already underway. If one is, it will schedule a follow-on indexing and then exit.
+The currently running indexer, when it completes its current run, will check to see if any updates are scheduled and will re-execute automatically.   This loop will continue until there are no scheduled runs pending.
