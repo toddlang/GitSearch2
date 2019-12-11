@@ -1,17 +1,17 @@
-#Git Search v2
+# Git Search v2
 
-##Description
+## Description
 Provides a full-text search of the commits contained in the LMS repo.
 
-###Requirements
+### Requirements
 * [.Net Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
 * [Blazor](https://docs.microsoft.com/en-us/aspnet/core/blazor/get-started?view=aspnetcore-3.1&tabs=visual-studio)
 * [Visual Studio 16.4 or later](https://visualstudio.microsoft.com/vs/preview/)
 
-###Optional
+### Optional
 * SqlServer with Full-Text Search installed
 
-###Operation
+### Operation
 GitSearch2.Indexer is a console application that will perform the actual work of moving through the repository and indexing the commits.  
 
 Simple example for a local Sqlite database:
