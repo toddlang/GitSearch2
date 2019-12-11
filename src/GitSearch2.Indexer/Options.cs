@@ -12,7 +12,10 @@ namespace GitSearch2.Indexer {
 		[Option('l', "live", Required = false, Default = false, HelpText = "Live statistics display.")]
 		public bool LiveStatisticsDisplay { get; set; }
 
-		[Option('d', "database", Required = true, Default = "webapp.sqlite3", HelpText = "Location of Sqlite database." )]
-		public string Database { get; set; }
+		[Option('c', "connection", Required = true, Default = "Data Source=webapp.sqlite3", HelpText = "Connection string to database." )]
+		public string Connection { get; set; }
+
+		[Option('d', "database", Required = true, Default = Database.Sqlite, HelpText = "Database backend. (Sqlite, SqlServer)" )]
+		public Database Database { get; set; }
 	}
 }

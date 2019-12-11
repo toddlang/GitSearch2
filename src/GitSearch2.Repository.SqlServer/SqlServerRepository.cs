@@ -29,11 +29,21 @@ namespace GitSearch2.Repository.SqlServer {
 			int targetSchema
 		) {
 			string sql = @"
-                CREATE TABLE IF NOT EXISTS SETTINGS
-                (
-				    SETTING_ID NVARCHAR(32) NOT NULL PRIMARY KEY,
-				    SETTING_VALUE TEXT NOT NULL
-                )
+				IF NOT EXISTS (
+					SELECT
+						'X'
+					FROM
+						INFORMATION_SCHEMA.TABLES
+					WHERE
+						TABLE_NAME = 'SETTINGS'
+				)
+				BEGIN
+					CREATE TABLE SETTINGS
+					(
+						SETTING_ID NVARCHAR(32) NOT NULL PRIMARY KEY,
+						SETTING_VALUE TEXT NOT NULL
+					)
+				END
 			;";
 
 			ExecuteNonQuery( sql );
@@ -301,11 +311,11 @@ namespace GitSearch2.Repository.SqlServer {
 		}
 
 		protected static string ToText( DateTimeOffset value ) {
-			return value.ToUniversalTime().ToString( "yyyy-MM-dd HH:mm:ss" );
+			return value.ToUniversalTime().ToString( "yyyy-MM-ddTHH:mm:ss" );
 		}
 
 		protected static string ToText( DateTime value ) {
-			return value.ToUniversalTime().ToString( "yyyy-MM-dd HH:mm:ss" );
+			return value.ToUniversalTime().ToString( "yyyy-MM-ddTHH:mm:ss" );
 		}
 
 		protected static DateTimeOffset? GetNullableDateTimeOffset( DbDataReader reader, string column ) {

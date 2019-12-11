@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using GitSearch2.Repository;
 using GitSearch2.Repository.Sqlite;
+using GitSearch2.Repository.SqlServer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -17,7 +18,7 @@ namespace GitSearch2.Server {
 #pragma warning disable CA1822
 	public class Startup {
 
-		public Startup(IConfiguration configuration) {
+		public Startup( IConfiguration configuration ) {
 			Configuration = configuration;
 		}
 
@@ -29,19 +30,14 @@ namespace GitSearch2.Server {
 			// Problem here: https://github.com/neuecc/Utf8Json/blob/master/src/Utf8Json.AspNetCoreMvcFormatter/Formatter.cs#L80
 			// Issue raised here: https://github.com/neuecc/Utf8Json/issues/97
 			// Alternatively, we could use this branch: https://github.com/DSilence/Utf8Json/tree/feature/formatters
-			services.Configure<KestrelServerOptions>( options =>
-			{
+			services.Configure<KestrelServerOptions>( options => {
 				options.AllowSynchronousIO = true;
 			} );
 			services.Configure<IISServerOptions>( options => {
 				options.AllowSynchronousIO = true;
 			} );
 
-			IConfigurationSection databaseOptions = Configuration.GetSection( "Database" );
-			IConfigurationSection connectionOptions = databaseOptions.GetSection( "Connection" );
-			services.Configure<SqliteOptions>( connectionOptions.GetSection( "Sqlite" ) );
-			services.AddSingleton<ICommitRepository, CommitSqliteRepository>();
-			services.AddSingleton<IUpdateRepository, UpdateSqliteRepository>();
+			AddRepositories( services );
 
 			services.AddMvc( options => {
 				options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
@@ -79,6 +75,23 @@ namespace GitSearch2.Server {
 			} );
 
 			app.UseRepositories();
+		}
+
+		private void AddRepositories( IServiceCollection services ) {
+			IConfigurationSection databaseOptions = Configuration.GetSection( "Database" );
+			string source = databaseOptions["Source"];
+			IConfigurationSection sourceOptions = databaseOptions.GetSection( source );
+
+			switch( source ) {
+				case "Sqlite":
+					services.AddSqlite( sourceOptions );
+					break;
+				case "SqlServer":
+					services.AddSqlServer( sourceOptions );
+					break;
+				default:
+					throw new InvalidOperationException();
+			}
 		}
 	}
 #pragma warning restore CA1822

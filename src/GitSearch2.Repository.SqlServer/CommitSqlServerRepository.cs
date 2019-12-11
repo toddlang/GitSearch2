@@ -7,18 +7,18 @@ using System.Threading.Tasks;
 using GitSearch2.Shared;
 using Microsoft.Extensions.Options;
 
-namespace GitSearch2.Repository.Sqlite {
-	public sealed class CommitSqliteRepository : SqliteRepository, ICommitRepository {
+namespace GitSearch2.Repository.SqlServer {
+	public sealed class CommitSqlServerRepository : SqlServerRepository, ICommitRepository {
 
 		private readonly string[] EnvironmentNewLine = new string[] { Environment.NewLine };
 		private const string SchemaId = "b914f541f1564495802d10f5ee208a41";
 		private const int TargetSchema = 1;
 
-		public CommitSqliteRepository( IOptions<SqliteOptions> options )
+		public CommitSqlServerRepository( IOptions<SqlServerOptions> options )
 			: this( options.Value ) {
 		}
 
-		public CommitSqliteRepository( SqliteOptions options ) :
+		public CommitSqlServerRepository( SqlServerOptions options ) :
 			base( options ) {
 		}
 
@@ -36,18 +36,18 @@ namespace GitSearch2.Repository.Sqlite {
 					DESCRIPTION TEXT NOT NULL,
 					AUTHOR_EMAIL NVARCHAR(128) NOT NULL,
 					AUTHOR_NAME NVARCHAR(128) NOT NULL,
-					COMMIT_DATE TEXT NOT NULL,
+					COMMIT_DATE DATETIME2 NOT NULL,
 					FILES TEXT NOT NULL,
 					PR_NUMBER NVARCHAR(32) NOT NULL,
 					MERGE_COMMITS TEXT NOT NULL,
-					PRIMARY KEY(COMMIT_ID, PROJECT, REPO)
+					CONSTRAINT PK_GIT_COMMIT PRIMARY KEY(COMMIT_ID, PROJECT, REPO)
 				)
 			;";
 			ExecuteNonQuery( sql );
 
 			sql = @"
 				CREATE INDEX
-					IDX_COMMIT_ID
+					IDX_EXISTS
 				ON
 					GIT_COMMIT (
 						COMMIT_ID,
@@ -55,21 +55,44 @@ namespace GitSearch2.Repository.Sqlite {
 						REPO
 					)
 			;";
-
 			ExecuteNonQuery( sql );
 
 			sql = @"
-				CREATE VIRTUAL TABLE SEARCHABLE_COMMIT USING FTS4(
-					COMMIT_ID,
-					PROJECT,
-					REPO,
-					DESCRIPTION,
-					AUTHOR_NAME,
-					AUTHOR_EMAIL,
-					FILES,
-					MERGE_COMMITS,
-					tokenize=unicode61 ""tokenchars=_.""
-				)
+				CREATE UNIQUE INDEX
+					IDX_COMMIT_ID
+				ON
+					GIT_COMMIT (
+						COMMIT_ID
+					)
+			;";
+			ExecuteNonQuery( sql );
+
+			sql = @"
+				CREATE FULLTEXT CATALOG
+					COMMIT_CATALOG
+				WITH
+					ACCENT_SENSITIVITY = OFF
+				AS DEFAULT
+			;";
+			ExecuteNonQuery( sql );
+
+			sql = @"
+				CREATE FULLTEXT INDEX ON
+					GIT_COMMIT(
+						COMMIT_ID,
+						PROJECT,
+						REPO,
+						DESCRIPTION,
+						AUTHOR_NAME,
+						AUTHOR_EMAIL,
+						FILES,
+						MERGE_COMMITS
+					)
+				KEY INDEX
+					IDX_COMMIT_ID
+					ON COMMIT_CATALOG
+				WITH
+					CHANGE_TRACKING = AUTO
 			;";
 
 			ExecuteNonQuery( sql );
@@ -110,7 +133,7 @@ namespace GitSearch2.Repository.Sqlite {
 			int limit
 		) {
 			string sql = @"
-				SELECT 
+				SELECT
 					GC.COMMIT_ID,
 					GC.PROJECT,
 					GC.REPO,
@@ -123,15 +146,16 @@ namespace GitSearch2.Repository.Sqlite {
 					GC.MERGE_COMMITS
 				FROM 
 					GIT_COMMIT AS GC
-					INNER JOIN SEARCHABLE_COMMIT AS SC
-						ON GC.COMMIT_ID = SC.COMMIT_ID
-						AND GC.REPO = SC.REPO
-						AND GC.PROJECT = SC.PROJECT
 				WHERE 
-					SEARCHABLE_COMMIT MATCH @term
+					CONTAINS( COMMIT_ID, @term )
+					OR CONTAINS( DESCRIPTION, @term )
+					OR CONTAINS( AUTHOR_EMAIL, @term )
+					OR CONTAINS( AUTHOR_NAME, @term )
+					OR CONTAINS( FILES, @term )
 				ORDER BY
 					GC.COMMIT_DATE DESC
-				LIMIT @limit
+				OFFSET 0 ROWS
+				FETCH NEXT @limit ROWS ONLY
 			;";
 
 			var parameters = new Dictionary<string, object>() {
@@ -147,7 +171,7 @@ namespace GitSearch2.Repository.Sqlite {
 			int limit
 		) {
 			string sql = @"
-				SELECT 
+				SELECT
 					GC.COMMIT_ID,
 					GC.PROJECT,
 					GC.REPO,
@@ -160,15 +184,16 @@ namespace GitSearch2.Repository.Sqlite {
 					GC.MERGE_COMMITS
 				FROM 
 					GIT_COMMIT AS GC
-					INNER JOIN SEARCHABLE_COMMIT AS SC
-						ON GC.COMMIT_ID = SC.COMMIT_ID
-						AND GC.REPO = SC.REPO
-						AND GC.PROJECT = SC.PROJECT
 				WHERE 
-					SEARCHABLE_COMMIT MATCH @term
+					CONTAINS( COMMIT_ID, @term )
+					OR CONTAINS( DESCRIPTION, @term )
+					OR CONTAINS( AUTHOR_EMAIL, @term )
+					OR CONTAINS( AUTHOR_NAME, @term )
+					OR CONTAINS( FILES, @term )
 				ORDER BY
 					GC.COMMIT_DATE DESC
-				LIMIT @limit
+				OFFSET 0 ROWS
+				FETCH NEXT @limit ROWS ONLY
 			;";
 
 			var parameters = new Dictionary<string, object>() {
@@ -282,33 +307,6 @@ namespace GitSearch2.Repository.Sqlite {
 			;";
 
 			ExecuteNonQuery( sql, parameters );
-
-			sql = @"
-				INSERT INTO SEARCHABLE_COMMIT
-				(
-					COMMIT_ID,
-					PROJECT,
-					REPO,
-					DESCRIPTION,
-					AUTHOR_NAME,
-					AUTHOR_EMAIL,
-					FILES,
-					MERGE_COMMITS
-				)
-				VALUES
-				(
-					@commitId,
-					@project,
-					@repo,
-					@description,
-					@authorName,
-					@authorEmail,
-					@files,
-					@mergeCommits
-				)
-			;";
-
-			ExecuteNonQuery( sql, parameters );
 		}
 
 		async Task ICommitRepository.AddAsync( CommitDetails commit ) {
@@ -355,33 +353,6 @@ namespace GitSearch2.Repository.Sqlite {
 					@commitDate,
 					@files,
 					@prNumber,
-					@mergeCommits
-				)
-			;";
-
-			await ExecuteNonQueryAsync( sql, parameters );
-
-			sql = @"
-				INSERT INTO SEARCHABLE_COMMIT
-				(
-					COMMIT_ID,
-					PROJECT,
-					REPO,
-					DESCRIPTION,
-					AUTHOR_NAME,
-					AUTHOR_EMAIL,
-					FILES,
-					MERGE_COMMITS
-				)
-				VALUES
-				(
-					@commitId,
-					@project,
-					@repo,
-					@description,
-					@authorName,
-					@authorEmail,
-					@files,
 					@mergeCommits
 				)
 			;";

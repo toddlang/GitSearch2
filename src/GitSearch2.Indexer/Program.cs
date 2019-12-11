@@ -2,6 +2,7 @@ using System;
 using CommandLine;
 using GitSearch2.Repository;
 using GitSearch2.Repository.Sqlite;
+using GitSearch2.Repository.SqlServer;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GitSearch2.Indexer {
@@ -10,27 +11,48 @@ namespace GitSearch2.Indexer {
 			Parser.Default.ParseArguments<Options>( args )
 			  .WithParsed( opts => {
 
-				  SqliteOptions options = new SqliteOptions() {
-					  ConnectionString = $"Data Source={opts.Database}"
-				  };
 
-				  IServiceProvider services = new ServiceCollection()
+				  IServiceCollection services = new ServiceCollection()
 					.AddSingleton( opts )
-					.AddSingleton( options )
 					.AddSingleton<ICommitWalker, CommitWalker>()
 					.AddSingleton<IStatisticsDisplay, StatisticsDisplay>()
 					.AddSingleton<INameParser, RemoteNameParser>()
-					.AddSingleton<ICommitRepository, CommitSqliteRepository>()
-					.AddSingleton<IUpdateRepository, UpdateSqliteRepository>()
-					.AddSingleton<IGitRepoProvider, CyclingGitRepoProvider>()
-					.BuildServiceProvider();
+					.AddSingleton<IGitRepoProvider, CyclingGitRepoProvider>();
 
-				  services.InitializeRepositories();
+				  switch (opts.Database) {
+					  case Database.Sqlite: {
+							  SqliteOptions options = new SqliteOptions() {
+								  ConnectionString = opts.Connection
+							  };
 
+							  services
+								.AddSingleton( options )
+								.AddSingleton<ICommitRepository, CommitSqliteRepository>()
+								.AddSingleton<IUpdateRepository, UpdateSqliteRepository>();
+						  }
+						  break;
+					  case Database.SqlServer: {
+							  SqlServerOptions options = new SqlServerOptions() {
+								  ConnectionString = opts.Connection
+							  };
+
+							  services
+								.AddSingleton( options )
+								.AddSingleton<ICommitRepository, CommitSqlServerRepository>()
+								.AddSingleton<IUpdateRepository, UpdateSqlServerRepository>();
+						  }
+						  break;
+					  default:
+						  Console.WriteLine( "Unknown database backend specified." );
+						  return;
+				  }
+
+				  IServiceProvider provider = services.BuildServiceProvider();
+				  provider.InitializeRepositories();
 
 				  DateTimeOffset start = DateTimeOffset.Now;
 
-				  ICommitWalker walker = services.GetService<ICommitWalker>();
+				  ICommitWalker walker = provider.GetService<ICommitWalker>();
 				  walker.Run();
 
 				  DateTimeOffset stop = DateTimeOffset.Now;

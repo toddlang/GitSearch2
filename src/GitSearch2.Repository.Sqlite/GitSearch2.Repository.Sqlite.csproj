@@ -6,7 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="3.1.0-preview3.19554.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.0-preview3.19553.2" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.0-preview3.19553.2" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.1.0-preview3.19553.2" />
   </ItemGroup>
 
   <ItemGroup>
