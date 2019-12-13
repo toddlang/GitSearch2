@@ -17,7 +17,8 @@ namespace GitSearch2.Indexer {
 					.AddSingleton<ICommitWalker, CommitWalker>()
 					.AddSingleton<IStatisticsDisplay, StatisticsDisplay>()
 					.AddSingleton<INameParser, RemoteNameParser>()
-					.AddSingleton<IGitRepoProvider, CyclingGitRepoProvider>();
+					.AddSingleton<IGitRepoProvider, CyclingGitRepoProvider>()
+					.AddSingleton<IExecutor, LoopingExecutor>();
 
 				  switch (opts.Database) {
 					  case Database.Sqlite: {
@@ -52,8 +53,8 @@ namespace GitSearch2.Indexer {
 
 				  DateTimeOffset start = DateTimeOffset.Now;
 
-				  ICommitWalker walker = provider.GetService<ICommitWalker>();
-				  walker.Run();
+				  IExecutor executor = provider.GetService<IExecutor>();
+				  executor.Run();
 
 				  DateTimeOffset stop = DateTimeOffset.Now;
 

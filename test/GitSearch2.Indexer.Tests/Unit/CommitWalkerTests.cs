@@ -17,7 +17,6 @@ namespace GitSearch2.Indexer.Tests.Unit {
 
 		private ICommitWalker _commitWalker;
 		private Mock<ICommitRepository> _commitRepository;
-		private Mock<IUpdateRepository> _updateRepository;
 		private Mock<INameParser> _nameParser;
 		private Mock<IStatisticsDisplay> _statisticsDisplay;
 		private Mock<IGitRepoProvider> _gitRepoProvider;
@@ -27,7 +26,6 @@ namespace GitSearch2.Indexer.Tests.Unit {
 		[SetUp]
 		public void Setup() {
 			_commitRepository = new Mock<ICommitRepository>( MockBehavior.Strict );
-			_updateRepository = new Mock<IUpdateRepository>( MockBehavior.Strict );
 			_nameParser = new Mock<INameParser>( MockBehavior.Strict );
 			_statisticsDisplay = new Mock<IStatisticsDisplay>( MockBehavior.Strict );
 			_gitRepoProvider = new Mock<IGitRepoProvider>( MockBehavior.Strict );
@@ -41,7 +39,6 @@ namespace GitSearch2.Indexer.Tests.Unit {
 
 			_commitWalker = new CommitWalker(
 				_commitRepository.Object,
-				_updateRepository.Object,
 				_nameParser.Object,
 				_statisticsDisplay.Object,
 				_gitRepoProvider.Object );
@@ -50,10 +47,10 @@ namespace GitSearch2.Indexer.Tests.Unit {
 		[Test]
 		public void Run_EmptyRepository_NoWorkDone() {
 
-			SetupUpdateRepository( _updateRepository, 0 );
 			SetupCommitLog( _commits, new List<Commit>() );
 
-			_commitWalker.Run();
+			int commitsWritten = _commitWalker.Run();
+			Assert.AreEqual( 0, commitsWritten );
 		}
 
 		[Test]
@@ -75,10 +72,10 @@ namespace GitSearch2.Indexer.Tests.Unit {
 					} )
 			};
 
-			SetupUpdateRepository( _updateRepository, 0 );
 			SetupCommitLog( _commits, commits );
 
-			_commitWalker.Run();
+			int commitsWritten = _commitWalker.Run();
+			Assert.AreEqual( 0, commitsWritten );
 		}
 
 		[Test]
@@ -100,10 +97,10 @@ namespace GitSearch2.Indexer.Tests.Unit {
 					} )
 			};
 
-			SetupUpdateRepository( _updateRepository, 1 );
 			SetupCommitLog( _commits, commits );
 
-			_commitWalker.Run();
+			int commitsWritten = _commitWalker.Run();
+			Assert.AreEqual( 1, commitsWritten );
 		}
 
 		[Test]
@@ -144,10 +141,10 @@ namespace GitSearch2.Indexer.Tests.Unit {
 				rootCommit
 			};
 
-			SetupUpdateRepository( _updateRepository, 1 );
 			SetupCommitLog( _commits, commits );
 
-			_commitWalker.Run();
+			int commitsWritten = _commitWalker.Run();
+			Assert.AreEqual( 1, commitsWritten );
 		}
 
 		private static Commit CreateRootCommit(
@@ -257,17 +254,6 @@ namespace GitSearch2.Indexer.Tests.Unit {
 			commitLog
 				.Setup( cl => cl.GetEnumerator() )
 				.Returns( commits.GetEnumerator() );
-		}
-
-		private static void SetupUpdateRepository(
-			Mock<IUpdateRepository> updateRepository,
-			int commitsWritten
-		) {
-			updateRepository
-				.Setup( ur => ur.Begin( It.IsAny<Guid>(), RepoName, ProjectName, It.IsAny<DateTime>() ) );
-
-			updateRepository
-				.Setup( ur => ur.End( It.IsAny<Guid>(), It.IsAny<DateTime>(), commitsWritten ) );
 		}
 
 		private static void SetupNameParser( Mock<INameParser> nameParser ) {

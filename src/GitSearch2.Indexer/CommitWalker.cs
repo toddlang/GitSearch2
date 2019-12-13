@@ -15,7 +15,6 @@ namespace GitSearch2.Indexer {
 
 		private readonly INameParser _repoNameParser;
 		private readonly ICommitRepository _commitRepository;
-		private readonly IUpdateRepository _updateRepository;
 		private readonly IStatisticsDisplay _statisticsDisplay;
 		private readonly IGitRepoProvider _gitRepoProvider;
 
@@ -23,111 +22,91 @@ namespace GitSearch2.Indexer {
 
 		public CommitWalker(
 			ICommitRepository commitRepository,
-			IUpdateRepository updateRepository,
 			INameParser repoNameParser,
 			IStatisticsDisplay statisticsDisplay,
 			IGitRepoProvider gitRepoProvider
 		) {
 			_commitRepository = commitRepository;
-			_updateRepository = updateRepository;
 			_repoNameParser = repoNameParser;
 			_statisticsDisplay = statisticsDisplay;
 			_gitRepoProvider = gitRepoProvider;
 		}
 
-		void ICommitWalker.Run() {
+		int ICommitWalker.Run() {
 
-			RepoProjectName name;
+			HashSet<string> visited = new HashSet<string>();
+			Stack<string> toVisit = new Stack<string>();
 
-			do {
-				HashSet<string> visited = new HashSet<string>();
-				Stack<string> toVisit = new Stack<string>();
+			_statistics = new Statistics( visited, toVisit );
 
-				_statistics = new Statistics( visited, toVisit );
+			IRepository gitRepo = _gitRepoProvider.GetRepo();
+			RepoProjectName name = _repoNameParser.Parse( gitRepo );
 
-				IRepository gitRepo = _gitRepoProvider.GetRepo();
+			// Short-circuit pre-history so that we never try to walk
+			// farther back than this point.
+			visited.Add( PreHistoryId );
 
-				name = _repoNameParser.Parse( gitRepo );
-				Guid session = Guid.NewGuid();
+			Commit current = gitRepo.Commits.FirstOrDefault();
 
-				UpdateSession scheduledSession = _updateRepository.GetScheduledUpdate( name.Repo, name.Project );
-				if( _updateRepository.UpdateInProgress( name.Repo, name.Project ) ) {
-					if( scheduledSession is null ) {
-						_updateRepository.ScheduleUpdate( session, name.Repo, name.Project );
-					}
-					return;
-				} else {
-					if( scheduledSession is null ) {
-						_updateRepository.Begin( session, name.Repo, name.Project, DateTime.Now );
+			while( !current?.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ?? false ) {
+				int parentCount = current.Parents.Count();
+
+				// Skip it if we've already seen it, otherwise make a note
+				// that we're visiting it.
+				if( !visited.Contains( current.Sha ) ) {
+					visited.Add( current.Sha );
+
+					// If it has one parent, it's a "real" commit and needs
+					// to be written to the DB.   It's a direct commit to
+					// master though, so we have no PR and no merge via.
+					if( parentCount == 1 ) {
+						_statistics.ProcessedCommit();
+						WriteCommit( current, name, "", Enumerable.Empty<string>() );
+
+					} else if( parentCount > 1 ) {
+						toVisit.Push( current.Sha );
+
 					} else {
-						session = new Guid( scheduledSession.Session );
-						_updateRepository.Resume( session, DateTime.Now );
+						// This is the initial commit, soooo...why are we here?
+
 					}
 				}
 
-				// Short-circuit pre-history so that we never try to walk
-				// farther back than this point.
-				visited.Add( PreHistoryId );
+				current = current.Parents.FirstOrDefault();
+				_statisticsDisplay.UpdateStatistics( _statistics );
 
-				Commit current = gitRepo.Commits.FirstOrDefault();
+				gitRepo = _gitRepoProvider.GetRepo( current, out current );
+			}
 
-				while( !current?.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ?? false ) {
-					int parentCount = current.Parents.Count();
+			// Now we run through every commit that we "skipped" in the previous pass
+			while( toVisit.Any() ) {
+				current = gitRepo.Lookup<Commit>( toVisit.Pop() );
+				_statistics.ProcessedCommit();
 
-					// Skip it if we've already seen it, otherwise make a note
-					// that we're visiting it.
-					if( !visited.Contains( current.Sha ) ) {
-						visited.Add( current.Sha );
-
-						// If it has one parent, it's a "real" commit and needs
-						// to be written to the DB.   It's a direct commit to
-						// master though, so we have no PR and no merge via.
-						if( parentCount == 1 ) {
-							_statistics.ProcessedCommit();
-							WriteCommit( current, name, "", Enumerable.Empty<string>() );
-						} else if( parentCount > 1 ) {
-
-							toVisit.Push( current.Sha );
-						} else {
-							// I have no idea what to do here
-						}
-					}
-
-					current = current.Parents.FirstOrDefault();
-					_statisticsDisplay.UpdateStatistics( _statistics );
-
-					gitRepo = _gitRepoProvider.GetRepo( current, out current );
-				}
-
-				// Now we run through every commit that we "skipped" in the previous pass
-				while( toVisit.Any() ) {
-					current = gitRepo.Lookup<Commit>( toVisit.Pop() );
-					_statistics.ProcessedCommit();
-
-					var mergeVia = new List<string>() {
+				var mergeVia = new List<string>() {
 					current.Sha
 				};
-					string prNumber = GetPrNumber( current );
+				string prNumber = GetPrNumber( current );
 
-					foreach( Commit target in current.Parents ) {
-						if( !visited.Contains( target.Sha ) && !target.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ) {
-							_statistics.ProcessedCommit();
-							if( !IsMergeInto( target ) ) {
-								WalkMerge( gitRepo, mergeVia, name, prNumber, visited, toVisit, target );
-							} else {
-								visited.Add( target.Sha );
-							}
+				foreach( Commit target in current.Parents ) {
+					if( !visited.Contains( target.Sha ) ) {
+						_statistics.ProcessedCommit();
+						if( !IsMergeInto( target ) ) {
+							WalkMerge( gitRepo, mergeVia, name, prNumber, visited, toVisit, target );
+
+						} else {
+							visited.Add( target.Sha );
+
 						}
 					}
-
-					_statisticsDisplay.UpdateStatistics( _statistics );
-
-					gitRepo = _gitRepoProvider.GetRepo();
 				}
 
-				_updateRepository.End( session, DateTime.Now, _statistics.Written );
+				_statisticsDisplay.UpdateStatistics( _statistics );
 
-			} while( _updateRepository.GetScheduledUpdate( name.Repo, name.Project ) != null );
+				gitRepo = _gitRepoProvider.GetRepo();
+			}
+
+			return _statistics.Written;
 		}
 
 		/// <summary>

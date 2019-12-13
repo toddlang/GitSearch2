@@ -9,11 +9,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 
-namespace GitSearch2.Server.Tests.Unit
-{
+namespace GitSearch2.Server.Tests.Unit {
 	[TestFixture]
-    public sealed class GitQueryControllerTests
-    {
+	public sealed class GitQueryControllerTests {
 		private GitQueryController _gitQueryController;
 		private Mock<ICommitRepository> _commitRepository;
 		private Mock<ILogger<GitQueryController>> _logger;
@@ -40,10 +38,10 @@ namespace GitSearch2.Server.Tests.Unit
 		[Test]
 		public async Task Search_ValidRequest_ReturnsOk() {
 			GitQuery query = new GitQuery( "term", 0, 1 );
-			var commits = new List<CommitDetails>();
+			IEnumerable<CommitDetails> commits = new List<CommitDetails>();
 			_commitRepository
-				.Setup( cr => cr.Search( "term", 1 ) )
-				.Returns( commits );
+				.Setup( cr => cr.SearchAsync( "term", 1 ) )
+				.Returns( Task.FromResult( commits ) );
 			ActionResult<GitQueryResponse> response = await _gitQueryController.SearchAsync( query );
 
 			Assert.IsInstanceOf<OkObjectResult>( response.Result );
@@ -53,10 +51,9 @@ namespace GitSearch2.Server.Tests.Unit
 		[Test]
 		public async Task Search_ValidRequestNullResult_Returns500() {
 			GitQuery query = new GitQuery( "term", 0, 1 );
-			var commits = new List<CommitDetails>();
 			_commitRepository
-				.Setup( cr => cr.Search( "term", 1 ) )
-				.Returns( default(IEnumerable<CommitDetails>) );
+				.Setup( cr => cr.SearchAsync( "term", 1 ) )
+				.Returns( Task.FromResult( default( IEnumerable<CommitDetails> ) ) );
 			ActionResult<GitQueryResponse> response = await _gitQueryController.SearchAsync( query );
 
 			Assert.IsInstanceOf<StatusCodeResult>( response.Result );

@@ -8,7 +8,7 @@ namespace GitSearch2.Repository {
 
 		UpdateSession GetUpdateSession( Guid session );
 
-		void Begin(
+		UpdateSession Begin(
 			Guid session,
 			string repo,
 			string project,

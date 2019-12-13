@@ -81,7 +81,7 @@ namespace GitSearch2.Indexer {
 		IEnumerable<string> IGitRepoProvider.GetCommitFiles( Commit commit ) {
 			var files = new List<string>();
 
-			LibGit2Sharp.CompareOptions options = new LibGit2Sharp.CompareOptions() {
+			CompareOptions options = new LibGit2Sharp.CompareOptions() {
 				IncludeUnmodified = false
 			};
 			// We need to track the calls for diffs since LibGit2Sharp experiences

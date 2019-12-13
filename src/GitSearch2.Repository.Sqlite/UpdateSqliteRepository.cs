@@ -68,7 +68,7 @@ namespace GitSearch2.Repository.Sqlite {
 			return ExecuteSingleReader( sql, parameters, ReadProgress );
 		}
 
-		void IUpdateRepository.Begin(
+		UpdateSession IUpdateRepository.Begin(
 			Guid session,
 			string repo,
 			string project,
@@ -99,6 +99,8 @@ namespace GitSearch2.Repository.Sqlite {
 			};
 
 			ExecuteNonQuery( sql, parameters );
+
+			return new UpdateSession( session, repo, project, started, null, 0 );
 		}
 
 		void IUpdateRepository.Resume(
@@ -240,7 +242,7 @@ namespace GitSearch2.Repository.Sqlite {
 
 			ExecuteNonQuery( sql, parameters );
 
-			return new UpdateSession( session.ToString("N"), repo, project, null, null, 0 );
+			return new UpdateSession( session, repo, project, null, null, 0 );
 		}
 
 
@@ -252,7 +254,7 @@ namespace GitSearch2.Repository.Sqlite {
 			DateTime? dbFinished = GetNullableDateTime( reader, "FINISHED" );
 			int dbCommitsWritten = GetInt( reader, "COMMITS_WRITTEN" );
 
-			return new UpdateSession( dbSession, dbRepo, dbProject, dbStarted, dbFinished, dbCommitsWritten );
+			return new UpdateSession( new Guid( dbSession ), dbRepo, dbProject, dbStarted, dbFinished, dbCommitsWritten );
 		}
 	}
 }
