@@ -55,7 +55,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@settingId", schemaId }
 			};
 
-			string result = Db.ExecuteSingleReader( sqlGetValue, parameters, LoadString );
+			string result = Db.ExecuteSingleReader( sqlGetValue, parameters, Db.LoadString );
 			int currentSchema = int.Parse( result ?? "0" );
 
 			if( currentSchema == 0 ) {
@@ -109,76 +109,6 @@ namespace GitSearch2.Repository.SqlServer {
 		protected virtual void UpdateSchema( int targetSchema ) {
 			throw new NotImplementedException();
 		}
-
-		protected static string LoadString( DbDataReader reader ) {
-			return reader.GetString( 0 );
-		}
-
-		protected static int LoadInt( DbDataReader reader ) {
-			return reader.GetInt32( 0 );
-		}
-
-		protected static DateTimeOffset LoadDateTimeOffset( DbDataReader reader ) {
-			if( reader.IsDBNull( 0 ) ) {
-				return default;
-			}
-
-			return new DateTimeOffset( reader.GetDateTime( 0 ), TimeSpan.Zero );
-		}
-
-		protected static int GetInt( DbDataReader reader, string column ) {
-			return reader.GetInt32( reader.GetOrdinal( column ) );
-		}
-
-		protected static bool GetBoolean( DbDataReader reader, string column ) {
-			return reader.GetBoolean( reader.GetOrdinal( column ) );
-		}
-
-		protected static string GetString( DbDataReader reader, string column ) {
-			int index = reader.GetOrdinal( column );
-			if( reader.IsDBNull( index ) ) {
-				return default;
-			}
-			return reader.GetString( index );
-		}
-
-		protected static DateTimeOffset GetDateTimeOffset( DbDataReader reader, string column ) {
-			return new DateTimeOffset( reader.GetDateTime( reader.GetOrdinal( column ) ), TimeSpan.Zero );
-		}
-
-		protected static DateTime GetDateTime( DbDataReader reader, string column ) {
-			DateTime result = reader.GetDateTime( reader.GetOrdinal( column ) );
-
-			return result.ToUniversalTime();
-		}
-
-		protected static string ToText( DateTimeOffset value ) {
-			return value.ToUniversalTime().ToString( "yyyy-MM-ddTHH:mm:ss" );
-		}
-
-		protected static string ToText( DateTime value ) {
-			return value.ToUniversalTime().ToString( "yyyy-MM-ddTHH:mm:ss" );
-		}
-
-		protected static DateTimeOffset? GetNullableDateTimeOffset( DbDataReader reader, string column ) {
-			int index = reader.GetOrdinal( column );
-			if( reader.IsDBNull( index ) ) {
-				return default;
-			}
-
-			return new DateTimeOffset( reader.GetDateTime( index ), TimeSpan.Zero );
-		}
-
-		protected static DateTime? GetNullableDateTime( DbDataReader reader, string column ) {
-			int index = reader.GetOrdinal( column );
-			if( reader.IsDBNull( index ) ) {
-				return default;
-			}
-
-			DateTime result = reader.GetDateTime( index );
-			return result.ToUniversalTime();
-		}
-
 #pragma warning restore CA2100
 	}
 }

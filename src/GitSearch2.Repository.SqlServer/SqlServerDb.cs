@@ -23,6 +23,75 @@ namespace GitSearch2.Repository.SqlServer {
 			_connectionString = options.ConnectionString;
 		}
 
+		public string LoadString( DbDataReader reader ) {
+			return reader.GetString( 0 );
+		}
+
+		public int LoadInt( DbDataReader reader ) {
+			return reader.GetInt32( 0 );
+		}
+
+		public DateTimeOffset LoadDateTimeOffset( DbDataReader reader ) {
+			if( reader.IsDBNull( 0 ) ) {
+				return default;
+			}
+
+			return new DateTimeOffset( reader.GetDateTime( 0 ), TimeSpan.Zero );
+		}
+
+		public int GetInt( DbDataReader reader, string column ) {
+			return reader.GetInt32( reader.GetOrdinal( column ) );
+		}
+
+		public bool GetBoolean( DbDataReader reader, string column ) {
+			return reader.GetBoolean( reader.GetOrdinal( column ) );
+		}
+
+		public string GetString( DbDataReader reader, string column ) {
+			int index = reader.GetOrdinal( column );
+			if( reader.IsDBNull( index ) ) {
+				return default;
+			}
+			return reader.GetString( index );
+		}
+
+		public DateTimeOffset GetDateTimeOffset( DbDataReader reader, string column ) {
+			return new DateTimeOffset( reader.GetDateTime( reader.GetOrdinal( column ) ), TimeSpan.Zero );
+		}
+
+		public DateTime GetDateTime( DbDataReader reader, string column ) {
+			DateTime result = reader.GetDateTime( reader.GetOrdinal( column ) );
+
+			return result.ToUniversalTime();
+		}
+
+		public string ToText( DateTimeOffset value ) {
+			return value.ToUniversalTime().ToString( "yyyy-MM-ddTHH:mm:ss" );
+		}
+
+		public string ToText( DateTime value ) {
+			return value.ToUniversalTime().ToString( "yyyy-MM-ddTHH:mm:ss" );
+		}
+
+		public DateTimeOffset? GetNullableDateTimeOffset( DbDataReader reader, string column ) {
+			int index = reader.GetOrdinal( column );
+			if( reader.IsDBNull( index ) ) {
+				return default;
+			}
+
+			return new DateTimeOffset( reader.GetDateTime( index ), TimeSpan.Zero );
+		}
+
+		public DateTime? GetNullableDateTime( DbDataReader reader, string column ) {
+			int index = reader.GetOrdinal( column );
+			if( reader.IsDBNull( index ) ) {
+				return default;
+			}
+
+			DateTime result = reader.GetDateTime( index );
+			return result.ToUniversalTime();
+		}
+
 		public async Task ExecuteNonQueryAsync( string sql ) {
 
 			using( var connection = new SqlConnection( _connectionString ) ) {

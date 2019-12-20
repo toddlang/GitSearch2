@@ -91,7 +91,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@session", session.ToString("N") },
 				{ "@project", project },
 				{ "@repo", repo },
-				{ "@started", ToText(started) }
+				{ "@started", Db.ToText(started) }
 			};
 
 			Db.ExecuteNonQuery( sql, parameters );
@@ -113,7 +113,7 @@ namespace GitSearch2.Repository.Sqlite {
 
 			var parameters = new Dictionary<string, object>() {
 				{ "@session", session.ToString("N") },
-				{ "@started", ToText(started) }
+				{ "@started", Db.ToText(started) }
 			};
 
 			Db.ExecuteNonQuery( sql, parameters );
@@ -135,7 +135,7 @@ namespace GitSearch2.Repository.Sqlite {
 
 			var parameters = new Dictionary<string, object>() {
 				{ "@session", session.ToString("N") },
-				{ "@finished", ToText(finished) },
+				{ "@finished", Db.ToText(finished) },
 				{ "@written", commitsWritten }
 			};
 
@@ -161,7 +161,7 @@ namespace GitSearch2.Repository.Sqlite {
 				)
 			;";
 
-			return Db.ExecuteSingleReader( sql, NoParameters, LoadDateTimeOffset );
+			return Db.ExecuteSingleReader( sql, NoParameters, Db.LoadDateTimeOffset );
 		}
 
 		bool IUpdateRepository.UpdateInProgress( string repo, string project ) {
@@ -181,7 +181,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@project", project }
 			};
 
-			int count = Db.ExecuteSingleReader( sql, parameters, LoadInt );
+			int count = Db.ExecuteSingleReader( sql, parameters, Db.LoadInt );
 			return ( count > 0 );
 		}
 
@@ -243,12 +243,12 @@ namespace GitSearch2.Repository.Sqlite {
 
 
 		private UpdateSession ReadProgress( DbDataReader reader ) {
-			string dbSession = GetString( reader, "SESSION" );
-			string dbRepo = GetString( reader, "REPO" );
-			string dbProject = GetString( reader, "PROJECT" );
-			DateTime dbStarted = GetDateTime( reader, "STARTED" );
-			DateTime? dbFinished = GetNullableDateTime( reader, "FINISHED" );
-			int dbCommitsWritten = GetInt( reader, "COMMITS_WRITTEN" );
+			string dbSession = Db.GetString( reader, "SESSION" );
+			string dbRepo = Db.GetString( reader, "REPO" );
+			string dbProject = Db.GetString( reader, "PROJECT" );
+			DateTime dbStarted = Db.GetDateTime( reader, "STARTED" );
+			DateTime? dbFinished = Db.GetNullableDateTime( reader, "FINISHED" );
+			int dbCommitsWritten = Db.GetInt( reader, "COMMITS_WRITTEN" );
 
 			return new UpdateSession( new Guid( dbSession ), dbRepo, dbProject, dbStarted, dbFinished, dbCommitsWritten );
 		}

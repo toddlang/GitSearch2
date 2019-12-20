@@ -84,7 +84,7 @@ namespace GitSearch2.Repository.Sqlite {
 
 			var parameters = new Dictionary<string, object>();
 
-			return Db.ExecuteSingleReader( sql, parameters, LoadInt );
+			return Db.ExecuteSingleReader( sql, parameters, Db.LoadInt );
 		}
 
 		async Task<int> ICommitRepository.CountCommitsAsync() {
@@ -97,7 +97,7 @@ namespace GitSearch2.Repository.Sqlite {
 
 			var parameters = new Dictionary<string, object>();
 
-			return await Db.ExecuteSingleReaderAsync( sql, parameters, LoadInt );
+			return await Db.ExecuteSingleReaderAsync( sql, parameters, Db.LoadInt );
 		}
 
 		IEnumerable<CommitDetails> ICommitRepository.Search(
@@ -196,7 +196,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@repo", repo }
 			};
 
-			int hasRow = Db.ExecuteSingleReader( sql, parameters, LoadInt );
+			int hasRow = Db.ExecuteSingleReader( sql, parameters, Db.LoadInt );
 
 			return ( hasRow == 1 );
 		}
@@ -223,7 +223,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@repo", repo }
 			};
 
-			int hasRow = await Db.ExecuteSingleReaderAsync( sql, parameters, LoadInt );
+			int hasRow = await Db.ExecuteSingleReaderAsync( sql, parameters, Db.LoadInt );
 
 			return ( hasRow == 1 );
 		}
@@ -240,7 +240,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@repo", commit.Repo },
 				{ "@authorEmail", commit.AuthorEmail },
 				{ "@authorName", commit.AuthorName },
-				{ "@commitDate", ToText(commitDate) },
+				{ "@commitDate", Db.ToText(commitDate) },
 				{ "@files", files },
 				{ "@project", commit.Project },
 				{ "@prNumber", commit.PR },
@@ -318,7 +318,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@repo", commit.Repo },
 				{ "@authorEmail", commit.AuthorEmail },
 				{ "@authorName", commit.AuthorName },
-				{ "@commitDate", ToText(commitDate) },
+				{ "@commitDate", Db.ToText(commitDate) },
 				{ "@files", files },
 				{ "@project", commit.Project },
 				{ "@prNumber", commit.PR },
@@ -385,16 +385,16 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		private CommitDetails ReadCommit( DbDataReader reader ) {
-			string dbCommitId = GetString( reader, "COMMIT_ID" );
-			string dbDescription = GetString( reader, "DESCRIPTION" );
-			string dbRepo = GetString( reader, "REPO" );
-			string dbAuthorEmail = GetString( reader, "AUTHOR_EMAIL" );
-			string dbAuthorName = GetString( reader, "AUTHOR_NAME" );
-			DateTime dbCommitDate = GetDateTime( reader, "COMMIT_DATE" );
-			string dbFiles = GetString( reader, "FILES" );
-			string dbProject = GetString( reader, "PROJECT" );
-			string dbPrNumber = GetString( reader, "PR_NUMBER" );
-			string dbCommits = GetString( reader, "MERGE_COMMITS" );
+			string dbCommitId = Db.GetString( reader, "COMMIT_ID" );
+			string dbDescription = Db.GetString( reader, "DESCRIPTION" );
+			string dbRepo = Db.GetString( reader, "REPO" );
+			string dbAuthorEmail = Db.GetString( reader, "AUTHOR_EMAIL" );
+			string dbAuthorName = Db.GetString( reader, "AUTHOR_NAME" );
+			DateTime dbCommitDate = Db.GetDateTime( reader, "COMMIT_DATE" );
+			string dbFiles = Db.GetString( reader, "FILES" );
+			string dbProject = Db.GetString( reader, "PROJECT" );
+			string dbPrNumber = Db.GetString( reader, "PR_NUMBER" );
+			string dbCommits = Db.GetString( reader, "MERGE_COMMITS" );
 
 			return new CommitDetails(
 				authorEmail: dbAuthorEmail,
