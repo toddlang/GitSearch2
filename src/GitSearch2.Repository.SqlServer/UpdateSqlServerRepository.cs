@@ -10,12 +10,8 @@ namespace GitSearch2.Repository.SqlServer {
 		private const string SchemaId = "15c8b53ab898475497ad37cf968b93aa";
 		private const int TargetSchema = 2;
 
-		public UpdateSqlServerRepository( IOptions<SqlServerOptions> options )
-			: this( options.Value ) {
-		}
-
-		public UpdateSqlServerRepository( SqlServerOptions options ) :
-			base( options ) {
+		public UpdateSqlServerRepository( IDb db ) :
+			base( db ) {
 		}
 
 		void IUpdateRepository.Initialize() {
@@ -23,7 +19,7 @@ namespace GitSearch2.Repository.SqlServer {
 		}
 
 		protected override void CreateSchema() {
-			string sql = @"
+			const string sql = @"
 				CREATE TABLE GIT_UPDATE
 				(
 					SESSION NVARCHAR(32) NOT NULL,
@@ -36,7 +32,7 @@ namespace GitSearch2.Repository.SqlServer {
 				)
 			;";
 
-			ExecuteNonQuery( sql );
+			Db.ExecuteNonQuery( sql );
 		}
 
 		protected override void UpdateSchema( int targetSchema ) {
@@ -46,7 +42,7 @@ namespace GitSearch2.Repository.SqlServer {
 		UpdateSession IUpdateRepository.GetUpdateSession(
 			Guid session
 		) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					SESSION,
 					PROJECT,
@@ -64,7 +60,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@session", session.ToString("N") }
 			};
 
-			return ExecuteSingleReader( sql, parameters, ReadProgress );
+			return Db.ExecuteSingleReader( sql, parameters, ReadProgress );
 		}
 
 		UpdateSession IUpdateRepository.Begin(
@@ -73,7 +69,7 @@ namespace GitSearch2.Repository.SqlServer {
 			string project,
 			DateTime started
 		) {
-			string sql = @"
+			const string sql = @"
 				INSERT INTO GIT_UPDATE
 				(
 					SESSION,
@@ -97,7 +93,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@started", ToText(started) }
 			};
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 
 			return new UpdateSession( session, repo, project, started, null, 0 );
 		}
@@ -106,7 +102,7 @@ namespace GitSearch2.Repository.SqlServer {
 			Guid session,
 			DateTime started
 		) {
-			string sql = @"
+			const string sql = @"
 				UPDATE GIT_UPDATE
 				SET
 					STARTED = @started
@@ -119,7 +115,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@started", ToText(started) }
 			};
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 		}
 
 		void IUpdateRepository.End(
@@ -127,7 +123,7 @@ namespace GitSearch2.Repository.SqlServer {
 			DateTime finished,
 			int commitsWritten
 		) {
-			string sql = @"
+			const string sql = @"
 				UPDATE GIT_UPDATE
 				SET
 					FINISHED = @finished,
@@ -142,11 +138,11 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@written", commitsWritten }
 			};
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 		}
 
 		DateTimeOffset IUpdateRepository.GetMostRecentCommit() {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					MIN(STARTED) AS LAST_INDEXED
 				FROM
@@ -164,14 +160,14 @@ namespace GitSearch2.Repository.SqlServer {
 				)
 			;";
 
-			return ExecuteSingleReader( sql, NoParameters, LoadDateTimeOffset );
+			return Db.ExecuteSingleReader( sql, NoParameters, LoadDateTimeOffset );
 		}
 
 		bool IUpdateRepository.UpdateInProgress(
 			string repo,
 			string project
 		) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					COUNT(*)
 				FROM
@@ -187,7 +183,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@project", project }
 			};
 
-			int count = ExecuteSingleReader( sql, parameters, LoadInt );
+			int count = Db.ExecuteSingleReader( sql, parameters, LoadInt );
 			return ( count > 0 );
 		}
 
@@ -195,7 +191,7 @@ namespace GitSearch2.Repository.SqlServer {
 			string repo,
 			string project
 		) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					SESSION,
 					PROJECT,
@@ -216,7 +212,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@project", project }
 			};
 
-			return ExecuteSingleReader( sql, parameters, ReadProgress );
+			return Db.ExecuteSingleReader( sql, parameters, ReadProgress );
 		}
 
 		UpdateSession IUpdateRepository.ScheduleUpdate(
@@ -224,7 +220,7 @@ namespace GitSearch2.Repository.SqlServer {
 			string repo,
 			string project
 		) {
-			string sql = @"
+			const string sql = @"
 				INSERT INTO GIT_UPDATE
 				(
 					SESSION,
@@ -245,7 +241,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@repo", repo }
 			};
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 
 			return new UpdateSession( session, repo, project, null, null, 0 );
 		}

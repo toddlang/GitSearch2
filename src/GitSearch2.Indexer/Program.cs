@@ -11,7 +11,6 @@ namespace GitSearch2.Indexer {
 			Parser.Default.ParseArguments<Options>( args )
 			  .WithParsed( opts => {
 
-
 				  IServiceCollection services = new ServiceCollection()
 					.AddSingleton( opts )
 					.AddSingleton<ICommitWalker, CommitWalker>()
@@ -26,10 +25,7 @@ namespace GitSearch2.Indexer {
 								  ConnectionString = opts.Connection
 							  };
 
-							  services
-								.AddSingleton( options )
-								.AddSingleton<ICommitRepository, CommitSqliteRepository>()
-								.AddSingleton<IUpdateRepository, UpdateSqliteRepository>();
+							  services.AddSqlite( options );
 						  }
 						  break;
 					  case Database.SqlServer: {
@@ -37,10 +33,7 @@ namespace GitSearch2.Indexer {
 								  ConnectionString = opts.Connection
 							  };
 
-							  services
-								.AddSingleton( options )
-								.AddSingleton<ICommitRepository, CommitSqlServerRepository>()
-								.AddSingleton<IUpdateRepository, UpdateSqlServerRepository>();
+							  services.AddSqlServer( options );
 						  }
 						  break;
 					  default:

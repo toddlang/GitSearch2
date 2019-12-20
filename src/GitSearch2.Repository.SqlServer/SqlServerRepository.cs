@@ -1,34 +1,28 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Data.SqlClient;
-using System.Threading.Tasks;
 
 namespace GitSearch2.Repository.SqlServer {
 	public class SqlServerRepository {
 #pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
 
-		private readonly string _connectionString;
-
 		public SqlServerRepository(
-			SqlServerOptions options
+			IDb db
 		) {
-			if (options is null) {
-				throw new ArgumentNullException( nameof( options ) );
+			if( db is null ) {
+				throw new ArgumentNullException( nameof( db ) );
 			}
 
-			if (string.IsNullOrWhiteSpace(options.ConnectionString)) {
-				throw new ArgumentException( options.ConnectionString );
-			}
-
-			_connectionString = options.ConnectionString;
+			Db = db;
 		}
+
+		public IDb Db { get; }
 
 		public void Initialize(
 			string schemaId,
 			int targetSchema
 		) {
-			string sql = @"
+			const string sqlCreateTable = @"
 				IF NOT EXISTS (
 					SELECT
 						'X'
@@ -46,9 +40,9 @@ namespace GitSearch2.Repository.SqlServer {
 				END
 			;";
 
-			ExecuteNonQuery( sql );
+			Db.ExecuteNonQuery( sqlCreateTable );
 
-			sql = @"
+			const string sqlGetValue = @"
 				SELECT
 					SETTING_VALUE
 				FROM
@@ -61,13 +55,13 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@settingId", schemaId }
 			};
 
-			string result = ExecuteSingleReader( sql, parameters, LoadString );
+			string result = Db.ExecuteSingleReader( sqlGetValue, parameters, LoadString );
 			int currentSchema = int.Parse( result ?? "0" );
 
 			if( currentSchema == 0 ) {
 				CreateSchema();
 
-				sql = @"
+				const string sqlInsertValue = @"
 					INSERT INTO SETTINGS
 					(
 						SETTING_ID,
@@ -84,7 +78,7 @@ namespace GitSearch2.Repository.SqlServer {
 					{ "@settingId", schemaId },
 					{ "@settingValue", targetSchema.ToString() }
 				};
-				ExecuteNonQuery( sql, parameters );
+				Db.ExecuteNonQuery( sqlInsertValue, parameters );
 
 			} else if( currentSchema < targetSchema ) {
 
@@ -92,7 +86,7 @@ namespace GitSearch2.Repository.SqlServer {
 					UpdateSchema( version );
 				}
 
-				sql = @"
+				const string sqlUpdateValue = @"
 					UPDATE SETTINGS
 					SET
 						SETTING_VALUE = @settingValue
@@ -104,160 +98,8 @@ namespace GitSearch2.Repository.SqlServer {
 					{ "@settingId", schemaId },
 					{ "@settingValue", targetSchema.ToString() }
 				};
-				ExecuteNonQuery( sql, parameters );
+				Db.ExecuteNonQuery( sqlUpdateValue, parameters );
 			}
-		}
-
-		public async Task ExecuteNonQueryAsync( string sql ) {
-
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				await connection.OpenAsync();
-
-				await PerformNonQueryAsync( connection, sql );
-
-				connection.Close();
-			}
-		}
-
-		public void ExecuteNonQuery( string sql ) {
-
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				connection.Open();
-
-				PerformNonQuery( connection, sql );
-
-				connection.Close();
-			}
-		}
-
-		public async Task ExecuteNonQueryAsync(
-			string sql,
-			IDictionary<string, object> parameters
-		) {
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				await connection.OpenAsync();
-
-				await PerformNonQueryAsync( connection, sql, parameters );
-
-				connection.Close();
-			}
-		}
-
-		public void ExecuteNonQuery(
-			string sql,
-			IDictionary<string, object> parameters
-		) {
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				connection.Open();
-
-				PerformNonQuery( connection, sql, parameters );
-
-				connection.Close();
-			}
-		}
-
-		public async Task<IEnumerable<T>> ExecuteReaderAsync<T>(
-			string sql,
-			Func<DbDataReader, T> loader
-		) {
-			IEnumerable<T> result;
-
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				await connection.OpenAsync();
-
-				result = await PerformReaderAsync( connection, sql, loader );
-
-				connection.Close();
-			}
-			return result;
-		}
-
-		public IEnumerable<T> ExecuteReader<T>(
-			string sql,
-			Func<DbDataReader, T> loader
-		) {
-			IEnumerable<T> result;
-
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				connection.Open();
-
-				result = PerformReader( connection, sql, loader );
-
-				connection.Close();
-			}
-			return result;
-		}
-
-		public async Task<IEnumerable<T>> ExecuteReaderAsync<T>(
-			string sql,
-			IDictionary<string, object> parameters,
-			Func<DbDataReader, T> loader
-		) {
-			var result = default( IEnumerable<T> );
-
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				await connection.OpenAsync();
-
-				result = await PerformReaderAsync( connection, sql, parameters, loader );
-
-				connection.Close();
-			}
-
-			return result;
-		}
-
-		public IEnumerable<T> ExecuteReader<T>(
-			string sql,
-			IDictionary<string, object> parameters,
-			Func<DbDataReader, T> loader
-		) {
-			var result = default( IEnumerable<T> );
-
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				connection.Open();
-
-				result = PerformReader( connection, sql, parameters, loader );
-
-				connection.Close();
-			}
-
-			return result;
-		}
-
-		public async Task<T> ExecuteSingleReaderAsync<T>(
-			string sql,
-			IDictionary<string, object> parameters,
-			Func<DbDataReader, T> loader
-		) {
-			T result = default;
-
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				await connection.OpenAsync();
-
-				result = await PerformSingleReaderAsync( connection, sql, parameters, loader );
-
-				connection.Close();
-			}
-
-			return result;
-		}
-
-		public T ExecuteSingleReader<T>(
-			string sql,
-			IDictionary<string, object> parameters,
-			Func<DbDataReader, T> loader
-		) {
-			T result = default;
-
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				connection.Open();
-
-				result = PerformSingleReader( connection, sql, parameters, loader );
-
-				connection.Close();
-			}
-
-			return result;
 		}
 
 		protected virtual void CreateSchema() {
@@ -337,211 +179,6 @@ namespace GitSearch2.Repository.SqlServer {
 			return result.ToUniversalTime();
 		}
 
-		private async Task PerformNonQueryAsync(
-			SqlConnection connection,
-			string sql
-		) {
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-
-				await command.ExecuteNonQueryAsync();
-			}
-		}
-
-		private void PerformNonQuery(
-			SqlConnection connection,
-			string sql
-		) {
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-
-				command.ExecuteNonQuery();
-			}
-		}
-
-		private async Task PerformNonQueryAsync(
-			SqlConnection connection,
-			string sql,
-			IDictionary<string, object> parameters
-		) {
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-				foreach( string key in parameters.Keys ) {
-					command.Parameters.AddWithValue( key, parameters[key] );
-				}
-
-				await command.ExecuteNonQueryAsync();
-			}
-		}
-
-		private void PerformNonQuery(
-			SqlConnection connection,
-			string sql,
-			IDictionary<string, object> parameters
-		) {
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-				foreach( string key in parameters.Keys ) {
-					command.Parameters.AddWithValue( key, parameters[key] );
-				}
-
-				command.ExecuteNonQuery();
-			}
-		}
-
-		private async Task<IEnumerable<T>> PerformReaderAsync<T>(
-			SqlConnection connection,
-			string sql,
-			Func<DbDataReader, T> loader
-		) {
-			var result = new List<T>();
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-
-				using( DbDataReader reader = await command.ExecuteReaderAsync() ) {
-					if( reader.HasRows ) {
-						while( await reader.ReadAsync() ) {
-							result.Add( loader( reader ) );
-						}
-					}
-
-					reader.Close();
-				}
-			}
-			return result;
-		}
-
-		private IEnumerable<T> PerformReader<T>(
-			SqlConnection connection,
-			string sql,
-			Func<DbDataReader, T> loader
-		) {
-			var result = new List<T>();
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-
-				using( SqlDataReader reader = command.ExecuteReader() ) {
-					if( reader.HasRows ) {
-						while( reader.Read() ) {
-							result.Add( loader( reader ) );
-						}
-					}
-
-					reader.Close();
-				}
-			}
-			return result;
-		}
-
-		private async Task<IEnumerable<T>> PerformReaderAsync<T>(
-			SqlConnection connection,
-			string sql,
-			IDictionary<string, object> parameters,
-			Func<DbDataReader, T> loader
-		) {
-			var result = new List<T>();
-
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-				foreach( string key in parameters.Keys ) {
-					command.Parameters.AddWithValue( key, parameters[key] );
-				}
-
-				using( DbDataReader reader = await command.ExecuteReaderAsync() ) {
-					if( reader.HasRows ) {
-						while( await reader.ReadAsync() ) {
-							result.Add( loader( reader ) );
-						}
-					}
-
-					reader.Close();
-				}
-			}
-
-			return result;
-		}
-
-		private IEnumerable<T> PerformReader<T>(
-			SqlConnection connection,
-			string sql,
-			IDictionary<string, object> parameters,
-			Func<DbDataReader, T> loader
-		) {
-			var result = new List<T>();
-
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-				foreach( string key in parameters.Keys ) {
-					command.Parameters.AddWithValue( key, parameters[key] );
-				}
-
-				using( SqlDataReader reader = command.ExecuteReader() ) {
-					if( reader.HasRows ) {
-						while( reader.Read() ) {
-							result.Add( loader( reader ) );
-						}
-					}
-
-					reader.Close();
-				}
-			}
-
-			return result;
-		}
-
-		private async Task<T> PerformSingleReaderAsync<T>(
-			SqlConnection connection,
-			string sql,
-			IDictionary<string, object> parameters,
-			Func<DbDataReader, T> loader
-		) {
-			T result = default;
-
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-				foreach( string key in parameters.Keys ) {
-					command.Parameters.AddWithValue( key, parameters[key] );
-				}
-
-				using( DbDataReader reader = await command.ExecuteReaderAsync() ) {
-					if( reader.HasRows ) {
-						if( await reader.ReadAsync() ) {
-							result = loader( reader );
-						}
-					}
-					reader.Close();
-				}
-			}
-
-			return result;
-		}
-
-		private T PerformSingleReader<T>(
-			SqlConnection connection,
-			string sql,
-			IDictionary<string, object> parameters,
-			Func<DbDataReader, T> loader
-		) {
-			T result = default;
-
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-				foreach( string key in parameters.Keys ) {
-					command.Parameters.AddWithValue( key, parameters[key] );
-				}
-
-				using( SqlDataReader reader = command.ExecuteReader() ) {
-					if( reader.HasRows ) {
-						if( reader.Read() ) {
-							result = loader( reader );
-						}
-					}
-					reader.Close();
-				}
-			}
-
-			return result;
-		}
 #pragma warning restore CA2100
 	}
 }

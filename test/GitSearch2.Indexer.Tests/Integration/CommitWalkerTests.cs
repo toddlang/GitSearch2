@@ -31,7 +31,8 @@ namespace GitSearch2.Indexer.Tests.Integration {
 			var sqliteOptions = new SqliteOptions() {
 				ConnectionString = $"Data Source={Path.Combine( _testFolder, "integrationtests.sqlite" )}"
 			};
-			_commitRepository = new CommitSqliteRepository( sqliteOptions );
+			SqliteDb db = new SqliteDb( sqliteOptions );
+			_commitRepository = new CommitSqliteRepository( db );
 			_commitRepository.Initialize();
 			var repoNameParser = new LocalNameParser();
 			var statisticsDisplay = new TestStatisticsDisplay();

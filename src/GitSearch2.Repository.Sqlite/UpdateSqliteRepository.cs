@@ -11,12 +11,8 @@ namespace GitSearch2.Repository.Sqlite {
 		private const string SchemaId = "15c8b53ab898475497ad37cf968b93aa";
 		private const int TargetSchema = 2;
 
-		public UpdateSqliteRepository( IOptions<SqliteOptions> options )
-			: this( options.Value ) {
-		}
-
-		public UpdateSqliteRepository( SqliteOptions options ):
-			base( options ) {
+		public UpdateSqliteRepository( IDb db ):
+			base( db ) {
 		}
 
 		void IUpdateRepository.Initialize() {
@@ -24,7 +20,7 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		protected override void CreateSchema() {
-			string sql = @"
+			const string sql = @"
 				CREATE TABLE GIT_UPDATE
 				(
 					SESSION NVARCHAR(32) NOT NULL,
@@ -37,7 +33,7 @@ namespace GitSearch2.Repository.Sqlite {
 				)
 			;";
 
-			ExecuteNonQuery( sql );
+			Db.ExecuteNonQuery( sql );
 		}
 
 		protected override void UpdateSchema( int targetSchema ) {
@@ -47,7 +43,7 @@ namespace GitSearch2.Repository.Sqlite {
 		UpdateSession IUpdateRepository.GetUpdateSession(
 			Guid session
 		) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					SESSION,
 					PROJECT,
@@ -65,7 +61,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@session", session.ToString("N") }
 			};
 
-			return ExecuteSingleReader( sql, parameters, ReadProgress );
+			return Db.ExecuteSingleReader( sql, parameters, ReadProgress );
 		}
 
 		UpdateSession IUpdateRepository.Begin(
@@ -74,7 +70,7 @@ namespace GitSearch2.Repository.Sqlite {
 			string project,
 			DateTime started
 		) {
-			string sql = @"
+			const string sql = @"
 				INSERT INTO GIT_UPDATE
 				(
 					SESSION,
@@ -98,7 +94,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@started", ToText(started) }
 			};
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 
 			return new UpdateSession( session, repo, project, started, null, 0 );
 		}
@@ -107,7 +103,7 @@ namespace GitSearch2.Repository.Sqlite {
 			Guid session,
 			DateTime started
 		) {
-			string sql = @"
+			const string sql = @"
 				UPDATE GIT_UPDATE
 				SET
 					STARTED = @started
@@ -120,7 +116,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@started", ToText(started) }
 			};
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 		}
 
 		void IUpdateRepository.End(
@@ -128,7 +124,7 @@ namespace GitSearch2.Repository.Sqlite {
 			DateTime finished,
 			int commitsWritten
 		) {
-			string sql = @"
+			const string sql = @"
 				UPDATE GIT_UPDATE
 				SET
 					FINISHED = @finished,
@@ -143,11 +139,11 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@written", commitsWritten }
 			};
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 		}
 
 		DateTimeOffset IUpdateRepository.GetMostRecentCommit() {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					MIN(STARTED) AS LAST_INDEXED
 				FROM
@@ -165,11 +161,11 @@ namespace GitSearch2.Repository.Sqlite {
 				)
 			;";
 
-			return ExecuteSingleReader( sql, NoParameters, LoadDateTimeOffset );
+			return Db.ExecuteSingleReader( sql, NoParameters, LoadDateTimeOffset );
 		}
 
 		bool IUpdateRepository.UpdateInProgress( string repo, string project ) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					COUNT(*)
 				FROM
@@ -185,12 +181,12 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@project", project }
 			};
 
-			int count = ExecuteSingleReader( sql, parameters, LoadInt );
+			int count = Db.ExecuteSingleReader( sql, parameters, LoadInt );
 			return ( count > 0 );
 		}
 
 		UpdateSession IUpdateRepository.GetScheduledUpdate( string repo, string project ) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					SESSION,
 					PROJECT,
@@ -211,7 +207,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@project", project }
 			};
 
-			return ExecuteSingleReader( sql, parameters, ReadProgress );
+			return Db.ExecuteSingleReader( sql, parameters, ReadProgress );
 		}
 
 		UpdateSession IUpdateRepository.ScheduleUpdate(
@@ -219,7 +215,7 @@ namespace GitSearch2.Repository.Sqlite {
 			string repo,
 			string project
 		) {
-			string sql = @"
+			const string sql = @"
 				INSERT INTO GIT_UPDATE
 				(
 					SESSION,
@@ -240,7 +236,7 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@repo", repo }
 			};
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 
 			return new UpdateSession( session, repo, project, null, null, 0 );
 		}

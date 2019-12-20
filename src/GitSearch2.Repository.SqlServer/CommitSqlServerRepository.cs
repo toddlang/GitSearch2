@@ -5,21 +5,16 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using GitSearch2.Shared;
-using Microsoft.Extensions.Options;
 
 namespace GitSearch2.Repository.SqlServer {
 	public sealed class CommitSqlServerRepository : SqlServerRepository, ICommitRepository {
 
-		private readonly string[] EnvironmentNewLine = new string[] { Environment.NewLine };
+		private readonly string[] EnvironmentNewLine = { Environment.NewLine };
 		private const string SchemaId = "b914f541f1564495802d10f5ee208a41";
 		private const int TargetSchema = 1;
 
-		public CommitSqlServerRepository( IOptions<SqlServerOptions> options )
-			: this( options.Value ) {
-		}
-
-		public CommitSqlServerRepository( SqlServerOptions options ) :
-			base( options ) {
+		public CommitSqlServerRepository( IDb db ) :
+			base( db ) {
 		}
 
 		void ICommitRepository.Initialize() {
@@ -27,7 +22,7 @@ namespace GitSearch2.Repository.SqlServer {
 		}
 
 		protected override void CreateSchema() {
-			string sql = @"
+			const string sqlCreateTable = @"
 				CREATE TABLE GIT_COMMIT
 				(
 					COMMIT_ID NVARCHAR(64) NOT NULL,
@@ -43,9 +38,9 @@ namespace GitSearch2.Repository.SqlServer {
 					CONSTRAINT PK_GIT_COMMIT PRIMARY KEY(COMMIT_ID, PROJECT, REPO)
 				)
 			;";
-			ExecuteNonQuery( sql );
+			Db.ExecuteNonQuery( sqlCreateTable );
 
-			sql = @"
+			const string sqlCreateExistsIndex = @"
 				CREATE INDEX
 					IDX_EXISTS
 				ON
@@ -55,9 +50,9 @@ namespace GitSearch2.Repository.SqlServer {
 						REPO
 					)
 			;";
-			ExecuteNonQuery( sql );
+			Db.ExecuteNonQuery( sqlCreateExistsIndex );
 
-			sql = @"
+			const string sqlUniqueIndex = @"
 				CREATE UNIQUE INDEX
 					IDX_COMMIT_ID
 				ON
@@ -65,18 +60,18 @@ namespace GitSearch2.Repository.SqlServer {
 						COMMIT_ID
 					)
 			;";
-			ExecuteNonQuery( sql );
+			Db.ExecuteNonQuery( sqlUniqueIndex );
 
-			sql = @"
+			const string sqlCreateCatalog = @"
 				CREATE FULLTEXT CATALOG
 					COMMIT_CATALOG
 				WITH
 					ACCENT_SENSITIVITY = OFF
 				AS DEFAULT
 			;";
-			ExecuteNonQuery( sql );
+			Db.ExecuteNonQuery( sqlCreateCatalog );
 
-			sql = @"
+			const string sqlCreateFulltext = @"
 				CREATE FULLTEXT INDEX ON
 					GIT_COMMIT(
 						COMMIT_ID,
@@ -95,7 +90,7 @@ namespace GitSearch2.Repository.SqlServer {
 					CHANGE_TRACKING = AUTO
 			;";
 
-			ExecuteNonQuery( sql );
+			Db.ExecuteNonQuery( sqlCreateFulltext );
 		}
 
 		protected override void UpdateSchema( int targetSchema ) {
@@ -103,7 +98,7 @@ namespace GitSearch2.Repository.SqlServer {
 		}
 
 		int ICommitRepository.CountCommits() {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					COUNT(*)
 				FROM
@@ -112,11 +107,11 @@ namespace GitSearch2.Repository.SqlServer {
 
 			var parameters = new Dictionary<string, object>();
 
-			return ExecuteSingleReader( sql, parameters, LoadInt );
+			return Db.ExecuteSingleReader( sql, parameters, LoadInt );
 		}
 
 		async Task<int> ICommitRepository.CountCommitsAsync() {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					COUNT(*)
 				FROM
@@ -125,14 +120,14 @@ namespace GitSearch2.Repository.SqlServer {
 
 			var parameters = new Dictionary<string, object>();
 
-			return await ExecuteSingleReaderAsync( sql, parameters, LoadInt );
+			return await Db.ExecuteSingleReaderAsync( sql, parameters, LoadInt );
 		}
 
 		IEnumerable<CommitDetails> ICommitRepository.Search(
 			string term,
 			int limit
 		) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					GC.COMMIT_ID,
 					GC.PROJECT,
@@ -163,14 +158,14 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@limit", limit }
 			};
 
-			return ExecuteReader( sql, parameters, ReadCommit );
+			return Db.ExecuteReader( sql, parameters, ReadCommit );
 		}
 
 		async Task<IEnumerable<CommitDetails>> ICommitRepository.SearchAsync(
 			string term,
 			int limit
 		) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					GC.COMMIT_ID,
 					GC.PROJECT,
@@ -201,7 +196,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@limit", limit }
 			};
 
-			return await ExecuteReaderAsync( sql, parameters, ReadCommit );
+			return await Db.ExecuteReaderAsync( sql, parameters, ReadCommit );
 		}
 
 		bool ICommitRepository.ContainsCommit(
@@ -209,7 +204,7 @@ namespace GitSearch2.Repository.SqlServer {
 			string project,
 			string repo
 		) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					1
 				FROM
@@ -226,7 +221,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@repo", repo }
 			};
 
-			int hasRow = ExecuteSingleReader( sql, parameters, LoadInt );
+			int hasRow = Db.ExecuteSingleReader( sql, parameters, LoadInt );
 
 			return ( hasRow == 1 );
 		}
@@ -236,7 +231,7 @@ namespace GitSearch2.Repository.SqlServer {
 			string project,
 			string repo
 		) {
-			string sql = @"
+			const string sql = @"
 				SELECT
 					1
 				FROM
@@ -253,7 +248,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@repo", repo }
 			};
 
-			int hasRow = await ExecuteSingleReaderAsync( sql, parameters, LoadInt );
+			int hasRow = await Db.ExecuteSingleReaderAsync( sql, parameters, LoadInt );
 
 			return ( hasRow == 1 );
 		}
@@ -306,7 +301,7 @@ namespace GitSearch2.Repository.SqlServer {
 				)
 			;";
 
-			ExecuteNonQuery( sql, parameters );
+			Db.ExecuteNonQuery( sql, parameters );
 		}
 
 		async Task ICommitRepository.AddAsync( CommitDetails commit ) {
@@ -328,7 +323,7 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@mergeCommits", mergeCommits }
 			};
 
-			string sql = @"
+			const string sql = @"
 				INSERT INTO GIT_COMMIT 
 				(
 					COMMIT_ID,
@@ -357,7 +352,7 @@ namespace GitSearch2.Repository.SqlServer {
 				)
 			;";
 
-			await ExecuteNonQueryAsync( sql, parameters );
+			await Db.ExecuteNonQueryAsync( sql, parameters );
 		}
 
 		private CommitDetails ReadCommit( DbDataReader reader ) {

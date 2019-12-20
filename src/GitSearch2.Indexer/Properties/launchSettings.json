@@ -2,7 +2,7 @@
   "profiles": {
     "GitSearch2.Indexer - Sqlite": {
       "commandName": "Project",
-      "commandLineArgs": "--input c:\\d2l\\instances\\dev2\\checkout\\.git --pause true --live true --database Sqlite --connection \"Data Source=webapp.sqlite3\""
+      "commandLineArgs": "--input c:\\d2l\\instances\\dev\\checkout\\.git --pause true --live true --database Sqlite --connection \"Data Source=webapp.sqlite3\""
     },
     "GitSearch2.Indexer - SqlServer": {
       "commandName": "Project",
