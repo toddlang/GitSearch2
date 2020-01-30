@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using Microsoft.Extensions.Options;
 
 namespace GitSearch2.Repository.Sqlite {
 	public sealed class UpdateSqliteRepository : SqliteRepository, IUpdateRepository {

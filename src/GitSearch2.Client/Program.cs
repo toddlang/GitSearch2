@@ -1,17 +1,24 @@
 using System;
+using System.Threading.Tasks;
+using GitSearch2.Client.Service;
 using Microsoft.AspNetCore.Blazor.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GitSearch2.Client {
 
-#pragma warning disable CA1052
 	public class Program {
-		public static void Main( string[] args ) {
-			CreateHostBuilder( args ).Build().Run();
-		}
 
-		public static IWebAssemblyHostBuilder CreateHostBuilder( string[] args ) =>
-			BlazorWebAssemblyHost.CreateDefaultBuilder()
-				.UseBlazorStartup<Startup>();
+		public static async Task Main( string[] args ) {
+			var builder = WebAssemblyHostBuilder.CreateDefault( args );
+			builder.Services.AddSingleton<IJsonConverter, JsonConverter>();
+			builder.Services.AddSingleton<IGitQueryService, GitQueryService>();
+
+			builder.RootComponents.Add<App>( "app" );
+			WebAssemblyHost host = builder.Build();
+
+			// Access registered services here
+
+			await host.RunAsync();
+		}
 	}
 }
-#pragma warning restore
