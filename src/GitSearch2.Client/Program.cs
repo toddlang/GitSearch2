@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using GitSearch2.Client.Service;
-using Microsoft.AspNetCore.Blazor.Hosting;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GitSearch2.Client {
@@ -14,6 +14,7 @@ namespace GitSearch2.Client {
 			builder.Services.AddSingleton<IGitQueryService, GitQueryService>();
 
 			builder.RootComponents.Add<App>( "app" );
+			builder.Services.AddBaseAddressHttpClient();
 			WebAssemblyHost host = builder.Build();
 
 			// Access registered services here

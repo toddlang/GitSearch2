@@ -11,8 +11,8 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Serilog;
 using Utf8Json.AspNetCoreMvcFormatter;
+using Serilog;
 
 namespace GitSearch2.Server {
 #pragma warning disable CA1822
@@ -25,6 +25,16 @@ namespace GitSearch2.Server {
 		public IConfiguration Configuration { get; }
 
 		public void ConfigureServices( IServiceCollection services ) {
+
+			services
+				.AddControllers()
+				.AddMvcOptions( options => {
+					options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
+					options.InputFormatters.Add( new JsonInputFormatter() );
+					options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
+					options.OutputFormatters.Add( new JsonOutputFormatter() );
+				} );
+
 			// TODO: Remove this when Utf8Json.JsonInputFormatter uses
 			// DeserializeAsync inside the ReadAsync call.
 			// Problem here: https://github.com/neuecc/Utf8Json/blob/master/src/Utf8Json.AspNetCoreMvcFormatter/Formatter.cs#L80
@@ -39,13 +49,6 @@ namespace GitSearch2.Server {
 
 			AddRepositories( services );
 
-			services.AddMvc( options => {
-				options.InputFormatters.RemoveType<SystemTextJsonInputFormatter>();
-				options.InputFormatters.Add( new JsonInputFormatter() );
-				options.OutputFormatters.RemoveType<SystemTextJsonOutputFormatter>();
-				options.OutputFormatters.Add( new JsonOutputFormatter() );
-			} );
-
 			services.AddResponseCompression( opts => {
 				opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
 					new[] { "application/octet-stream" } );
@@ -56,14 +59,17 @@ namespace GitSearch2.Server {
 			IApplicationBuilder app,
 			IWebHostEnvironment env
 		) {
-			app.UseResponseCompression();
-
 			if( env.IsDevelopment() ) {
 				app.UseDeveloperExceptionPage();
-				app.UseBlazorDebugging();
+				app.UseWebAssemblyDebugging();
+			} else {
+				app.UseExceptionHandler( "/Error" );
+				app.UseHsts();
 			}
 
-			app.UseClientSideBlazorFiles<Client.Program>();
+			app.UseHttpsRedirection();
+			app.UseBlazorFrameworkFiles();
+			app.UseStaticFiles();
 
 			app.UseSerilogRequestLogging();
 
@@ -71,7 +77,7 @@ namespace GitSearch2.Server {
 
 			app.UseEndpoints( endpoints => {
 				endpoints.MapDefaultControllerRoute();
-				endpoints.MapFallbackToClientSideBlazor<Client.Program>( "index.html" );
+				endpoints.MapFallbackToFile( "index.html" );
 			} );
 
 			app.UseRepositories();
