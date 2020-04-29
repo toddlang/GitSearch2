@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using GitSearch2.Client.Service;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -14,7 +15,11 @@ namespace GitSearch2.Client {
 			builder.Services.AddSingleton<IGitQueryService, GitQueryService>();
 
 			builder.RootComponents.Add<App>( "app" );
-			builder.Services.AddBaseAddressHttpClient();
+			builder.Services.AddSingleton(
+				new HttpClient {
+					BaseAddress = new Uri( builder.HostEnvironment.BaseAddress )
+				}
+			);
 			WebAssemblyHost host = builder.Build();
 
 			// Access registered services here
