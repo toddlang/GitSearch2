@@ -7,57 +7,74 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GitSearch2.Indexer {
 	public sealed class Program {
-		public static void Main( string[] args ) {
-			Parser.Default.ParseArguments<Options>( args )
-			  .WithParsed( opts => {
+		public static int Main( string[] args ) {
+			return Parser.Default.ParseArguments<Options>( args )
+				.MapResult(
+					opts => {
 
-				  IServiceCollection services = new ServiceCollection()
-					.AddSingleton( opts )
-					.AddSingleton<ICommitWalker, CommitWalker>()
-					.AddSingleton<IStatisticsDisplay, StatisticsDisplay>()
-					.AddSingleton<INameParser, RemoteNameParser>()
-					.AddSingleton<IGitRepoProvider, CyclingGitRepoProvider>()
-					.AddSingleton<IExecutor, LoopingExecutor>();
+						IServiceCollection services = new ServiceCollection()
+						  .AddSingleton( opts )
+						  .AddSingleton<ICommitWalker, CommitWalker>()
+						  .AddSingleton<IStatisticsDisplay, StatisticsDisplay>()
+						  .AddSingleton<INameParser, RemoteNameParser>()
+						  .AddSingleton<IGitRepoProvider, CyclingGitRepoProvider>()
+						  .AddSingleton<IExecutor, LoopingExecutor>();
 
-				  switch (opts.Database) {
-					  case Database.Sqlite: {
-							  SqliteOptions options = new SqliteOptions() {
-								  ConnectionString = opts.Connection
-							  };
+						switch( opts.Database ) {
+							case Database.Sqlite: {
+									SqliteOptions options = new SqliteOptions() {
+										ConnectionString = opts.Connection
+									};
 
-							  services.AddSqlite( options );
-						  }
-						  break;
-					  case Database.SqlServer: {
-							  SqlServerOptions options = new SqlServerOptions() {
-								  ConnectionString = opts.Connection
-							  };
+									services.AddSqlite( options );
+								}
+								break;
+							case Database.SqlServer: {
+									SqlServerOptions options = new SqlServerOptions() {
+										ConnectionString = opts.Connection
+									};
 
-							  services.AddSqlServer( options );
-						  }
-						  break;
-					  default:
-						  Console.WriteLine( "Unknown database backend specified." );
-						  return;
-				  }
+									services.AddSqlServer( options );
+								}
+								break;
+							default:
+								Console.WriteLine( "Unknown database backend specified." );
+								return -1;
+						}
 
-				  IServiceProvider provider = services.BuildServiceProvider();
-				  provider.InitializeRepositories();
+						IServiceProvider provider = services.BuildServiceProvider();
 
-				  DateTimeOffset start = DateTimeOffset.Now;
+						try {
+							provider.InitializeRepositories();
 
-				  IExecutor executor = provider.GetService<IExecutor>();
-				  executor.Run();
+							DateTimeOffset start = DateTimeOffset.Now;
 
-				  DateTimeOffset stop = DateTimeOffset.Now;
+							IExecutor executor = provider.GetService<IExecutor>();
+							executor.Run();
 
-				  Console.WriteLine( $"Completed in {stop.Subtract( start ).TotalSeconds:F0} seconds." );
+							DateTimeOffset stop = DateTimeOffset.Now;
 
-				  if (opts.PauseWhenComplete) {
-					  Console.WriteLine( "Press any key to finish..." );
-					  Console.ReadKey();
-				  }
-			  } );
+							Console.WriteLine( $"Completed in {stop.Subtract( start ).TotalSeconds:F0} seconds." );
+
+							if( opts.PauseWhenComplete ) {
+								Console.WriteLine( "Press any key to finish..." );
+								Console.ReadKey();
+							}
+
+							return 0;
+
+						} catch( Exception e ) {
+							Console.WriteLine( e.Message );
+
+							if( opts.PauseWhenComplete ) {
+								Console.WriteLine( "Press any key to finish..." );
+								Console.ReadKey();
+							}
+
+							return -2;
+						}
+					},
+				_ => 1 ); // This will automatically print an error message based on the meta data if the arguments are incorrect
 		}
 	}
 }

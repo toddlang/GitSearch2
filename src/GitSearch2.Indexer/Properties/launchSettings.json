@@ -6,7 +6,7 @@
     },
     "GitSearch2.Indexer - SqlServer": {
       "commandName": "Project",
-      "commandLineArgs": "--input c:\\d2l\\instances\\dev2\\checkout\\.git --pause true --live true --database SqlServer --connection \"Data Source=KDX0-TLANG;Database=GitSearch;Integrated Security=true;\""
+      "commandLineArgs": "--input c:\\d2l\\instances\\dev2\\checkout\\.git --pause true --live true --database SqlServer --connection \"Data Source=KDX1-TLANG;Database=GitSearch;Integrated Security=true;\""
     }
   }
 }
