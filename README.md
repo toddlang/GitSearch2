@@ -4,9 +4,9 @@
 Provides a full-text search of the commits contained in the LMS repo.
 
 ### Requirements
-* [.Net Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+* [.Net Core 5.0](https://dotnet.microsoft.com/download/dotnet/5.0)
 * [Blazor](https://docs.microsoft.com/en-us/aspnet/core/blazor/get-started?view=aspnetcore-3.1&tabs=visual-studio)
-* [Visual Studio 16.4 or later](https://visualstudio.microsoft.com/vs/preview/)
+* [Visual Studio 16.8 Preview 4 or later](https://visualstudio.microsoft.com/vs/preview/)
 
 ### Optional
 * SqlServer with Full-Text Search installed

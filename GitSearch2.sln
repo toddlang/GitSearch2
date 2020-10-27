@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{54EA06FD-F14A-456E-A130-23E52D3BFE87}"
@@ -40,7 +41,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitSearch2.Indexer.Tests", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitSearch2.Repository.SqlServer", "src\GitSearch2.Repository.SqlServer\GitSearch2.Repository.SqlServer.csproj", "{FEB7207F-A17F-4CB6-A669-9BC485EC150D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitSearch2.Repository.SqlServer.Tests", "test\GitSearch2.Repository.SqlServer.Tests\GitSearch2.Repository.SqlServer.Tests.csproj", "{9BF3F93F-3B94-428A-98EE-D21E42D2F4C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitSearch2.Repository.SqlServer.Tests", "test\GitSearch2.Repository.SqlServer.Tests\GitSearch2.Repository.SqlServer.Tests.csproj", "{9BF3F93F-3B94-428A-98EE-D21E42D2F4C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
