@@ -1,10 +1,8 @@
 using System.Collections.Generic;
-using Utf8Json;
 
 namespace GitSearch2.Shared {
 	public sealed class GitQueryResponse {
 
-		[SerializationConstructor]
 		public GitQueryResponse(
 			IEnumerable<CommitDetails> commits,
 			string message

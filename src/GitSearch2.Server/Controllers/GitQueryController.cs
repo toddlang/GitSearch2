@@ -19,7 +19,7 @@ namespace GitSearch2.Server.Controllers {
 			ICommitRepository commitRepository
 		) {
 			_logger = logger;
-			_commit = commitRepository ?? throw new ArgumentException( nameof( commitRepository ) );
+			_commit = commitRepository ?? throw new ArgumentException( "Commit repository not specified.", nameof( commitRepository ) );
 		}
 
 
@@ -40,16 +40,12 @@ namespace GitSearch2.Server.Controllers {
 
 				return Ok( new GitQueryResponse( result, "" ) );
 
-// We suppress this here since we want to control how the response is generated
-// in the case of an unknown exception.
-#pragma warning disable CA1031 // Do not catch general exception types
 			} catch (Exception ex) {
 
 				_logger.LogError( ex, "Error performing query." );
 
 				return Ok( new GitQueryResponse( Enumerable.Empty<CommitDetails>(), ex.Message ) );
 			}
-#pragma warning restore CA1031 // Do not catch general exception types
 
 		}
 	}

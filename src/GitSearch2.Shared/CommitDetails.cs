@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Utf8Json;
 
 namespace GitSearch2.Shared {
-	public sealed class CommitDetails: IEquatable<CommitDetails> {
+	public sealed class CommitDetails : IEquatable<CommitDetails> {
 
-		[SerializationConstructor]
 		public CommitDetails(
 			IEnumerable<string> description,
 			string repo,
@@ -20,31 +18,31 @@ namespace GitSearch2.Shared {
 			bool isMerge
 		) {
 			if( string.IsNullOrWhiteSpace( repo ) ) {
-				throw new ArgumentException( nameof( repo ) );
+				throw new ArgumentException( "Repo name not specified", nameof( repo ) );
 			}
 
-			if (string.IsNullOrWhiteSpace( authorName )) {
-				throw new ArgumentException( nameof( authorName ) );
+			if( string.IsNullOrWhiteSpace( authorName ) ) {
+				throw new ArgumentException( "Author name not specified", nameof( authorName ) );
 			}
 
-			if (string.IsNullOrWhiteSpace( date )) {
-				throw new ArgumentException( nameof( date ) );
+			if( string.IsNullOrWhiteSpace( date ) ) {
+				throw new ArgumentException( "Date not specified", nameof( date ) );
 			}
 
-			if( string.IsNullOrWhiteSpace( commitId )) {
-				throw new ArgumentException( nameof( commitId ) );
+			if( string.IsNullOrWhiteSpace( commitId ) ) {
+				throw new ArgumentException( "CommitId not specified.", nameof( commitId ) );
 			}
 
-			Description = description ?? throw new ArgumentException( nameof( description ) );
+			Description = description ?? throw new ArgumentException( "Description not specified.", nameof( description ) );
 			Repo = repo;
 			AuthorEmail = authorEmail;
 			AuthorName = authorName;
 			Date = date;
-			Files = files ?? throw new ArgumentException( nameof( files ) );
+			Files = files ?? throw new ArgumentException( "Files not specified.", nameof( files ) );
 			CommitId = commitId;
 			Project = project;
 			PR = pr;
-			Commits = commits ?? throw new ArgumentException( nameof( commits ) );
+			Commits = commits ?? throw new ArgumentException( "Commits not specified.", nameof( commits ) );
 			IsMerge = isMerge;
 		}
 
@@ -71,11 +69,11 @@ namespace GitSearch2.Shared {
 		public bool IsMerge { get; }
 
 		public bool Equals( CommitDetails other ) {
-			if (other is null) {
+			if( other is null ) {
 				return false;
 			}
 
-			if (ReferenceEquals(other, this)) {
+			if( ReferenceEquals( other, this ) ) {
 				return true;
 			}
 

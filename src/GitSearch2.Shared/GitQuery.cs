@@ -1,25 +1,23 @@
 using System;
-using Utf8Json;
 
 namespace GitSearch2.Shared {
-	public sealed class GitQuery: IEquatable<GitQuery> {
+	public sealed class GitQuery : IEquatable<GitQuery> {
 
-		[SerializationConstructor]
 		public GitQuery(
 			string searchTerm,
 			int startRecord,
 			int maximumRecords
 		) {
-			if (string.IsNullOrWhiteSpace(searchTerm)) {
-				throw new ArgumentException( nameof( searchTerm ) );
+			if( string.IsNullOrWhiteSpace( searchTerm ) ) {
+				throw new ArgumentException( "Search term not specified.", nameof( searchTerm ) );
 			}
 
-			if (startRecord < 0) {
-				throw new ArgumentException( nameof( startRecord ) );
+			if( startRecord < 0 ) {
+				throw new ArgumentException( "Invalid start record.  Must be greater than or equal to zero.", nameof( startRecord ) );
 			}
 
-			if (maximumRecords <= 0) {
-				throw new ArgumentException( nameof( maximumRecords ) );
+			if( maximumRecords <= 0 ) {
+				throw new ArgumentException( "Maximum records not specified.  Must be greater than zero.", nameof( maximumRecords ) );
 			}
 
 			SearchTerm = searchTerm;
@@ -53,13 +51,7 @@ namespace GitSearch2.Shared {
 		}
 
 		public override int GetHashCode() {
-			unchecked {
-				int result = SearchTerm.GetHashCode();
-				result = ( result * 31 ) + StartRecord.GetHashCode();
-				result = ( result * 31 ) + MaximumRecords.GetHashCode();
-
-				return result;
-			}
+			return HashCode.Combine( SearchTerm, StartRecord, MaximumRecords );
 		}
 	}
 }

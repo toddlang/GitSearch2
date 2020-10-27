@@ -239,18 +239,22 @@ namespace GitSearch2.Indexer {
 			return result;
 		}
 
-		private string GetPrNumber( Commit commit ) {
+		private static string GetPrNumber( Commit commit ) {
 			string prNumber = string.Empty;
 			if( commit.Message.StartsWith( MergePrNumberToken ) ) {
 				int prStart = commit.Message.IndexOf( MergePrNumberToken ) + MergePrNumberToken.Length;
 				int prEnd = commit.Message.IndexOf( " in " );
-				prNumber = commit.Message.Substring( prStart, prEnd - prStart ).Trim();
+				int length = prEnd - prStart;
+				if (length <= 0) {
+					return string.Empty;
+				}
+				prNumber = commit.Message.Substring( prStart, length ).Trim();
 			}
 
 			return prNumber;
 		}
 
-		private bool IsMergeInto( Commit commit ) {
+		private static bool IsMergeInto( Commit commit ) {
 			return ( commit.Message.Contains( "Merge" ) && commit.Message.Contains( "into" ) );
 		}
 	}

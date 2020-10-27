@@ -1,7 +1,10 @@
 using System;
+using System.Security.Authentication;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 
@@ -15,7 +18,7 @@ namespace GitSearch2.Server {
 				.CreateLogger();
 			try {
 				Log.Information( "Application starting." );
-				BuildWebHost( args ).Run();
+				CreateHostBuilder( args ).Build().Run();
 			} catch( Exception ex ) {
 				Log.Fatal( ex, "Application startup failed." );
 			} finally {
@@ -23,13 +26,26 @@ namespace GitSearch2.Server {
 			}
 		}
 
-		public static IWebHost BuildWebHost( string[] args ) =>
-			WebHost.CreateDefaultBuilder( args )
-				.UseSerilog()
-				.UseConfiguration( new ConfigurationBuilder()
-					.AddCommandLine( args )
-					.Build() )
-				.UseStartup<Startup>()
-				.Build();
+		public static IHostBuilder CreateHostBuilder( string[] args ) {
+			return Host.CreateDefaultBuilder( args )
+				.ConfigureWebHostDefaults( webBuilder => {
+
+					webBuilder.ConfigureKestrel( serverOptions => {
+						serverOptions.ConfigureEndpointDefaults( defaults => {
+							defaults.Protocols = HttpProtocols.Http1AndHttp2;
+						} );
+
+						serverOptions.ConfigureHttpsDefaults( listenOptions => {
+							listenOptions.SslProtocols = SslProtocols.Tls12;
+						} );
+					} );
+
+					webBuilder.UseSerilog();
+					webBuilder.UseConfiguration( new ConfigurationBuilder()
+						.AddCommandLine( args )
+						.Build() );
+					webBuilder.UseStartup<Startup>();
+				} );
+		}
 	}
 }
