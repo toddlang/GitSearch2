@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GitSearch2.Client.Service;
 using GitSearch2.Shared;
 using Microsoft.AspNetCore.Components;
 
@@ -8,6 +9,8 @@ namespace GitSearch2.Client.Shared.Components {
 	public class CommitDetailsViewBase: ComponentBase {
 
 		[Parameter] public CommitDetails Details { get; set; }
+
+		[Inject] protected IUrlGenerator UrlGenerator { get; set; }
 
 		public string CommitUrl { get; set; }
 
@@ -25,12 +28,12 @@ namespace GitSearch2.Client.Shared.Components {
 			repo = converted.Repo;
 			project = converted.Project;
 
-			CommitUrl = $@"https://git.dev.d2l/projects/{Details.Project}/repos/{Details.Repo}/commits/{Details.CommitId}";
-			PrUrl = $@"https://git.dev.d2l/projects/{project}/repos/{repo}/pull-requests/{Details.PR}/overview";
+			CommitUrl = UrlGenerator.CommitUrl( Details );
+			PrUrl = UrlGenerator.PrUrl( project, repo, Details );
 
-			MergeUrls = Details.Commits.ToDictionary( c => c, c => $@"https://git.dev.d2l/projects/{Details.Project}/repos/{Details.Repo}/commits/{c}" );
+			MergeUrls = Details.Commits.ToDictionary( c => c, c => UrlGenerator.MergeUrl( Details, c ) );
 
-			FileUrls = Details.Files.ToDictionary( f => f, f => $@"https://git.dev.d2l/projects/{Details.Project}/repos/{Details.Repo}/commits/{Details.CommitId}#{f}" );
+			FileUrls = Details.Files.ToDictionary( f => f, f => UrlGenerator.FileUrl( Details, f ) );
 		}
 
 		private (string Project, string Repo, string Sha) HandleSubRepo(
