@@ -34,12 +34,7 @@ namespace GitSearch2.Indexer {
 		}
 
 		public override int GetHashCode() {
-			unchecked {
-				int result = Repo.GetHashCode();
-				result = ( result * 31 ) + Project.GetHashCode();
-
-				return result;
-			}
+			return HashCode.Combine( Repo, Project );
 		}
 	}
 }

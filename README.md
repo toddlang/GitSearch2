@@ -8,6 +8,9 @@ Provides a full-text search of the commits contained in the LMS repo.
 * [Blazor](https://docs.microsoft.com/en-us/aspnet/core/blazor/get-started?view=aspnetcore-3.1&tabs=visual-studio)
 * [Visual Studio 16.8 Preview 4 or later](https://visualstudio.microsoft.com/vs/preview/)
 
+If you plan on locally hosting the server, you will need the IIS hosting bundle
+* [IIS Hosting Bundle](https://dotnet.microsoft.com/download/dotnet/thank-you/runtime-aspnetcore-5.0.0-rc.2-windows-hosting-bundle-installer)
+
 ### Optional
 * SqlServer with Full-Text Search installed
 

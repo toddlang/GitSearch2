@@ -15,12 +15,12 @@ namespace GitSearch2.Client {
 			builder.Services.AddSingleton<IGitQueryService, GitQueryService>();
 
 			builder.RootComponents.Add<App>( "app" );
-			ConfigureServices( builder.Services );
 			builder.Services.AddSingleton(
 				new HttpClient {
 					BaseAddress = new Uri( builder.HostEnvironment.BaseAddress )
 				}
 			);
+			ConfigureServices( builder.Services );
 			WebAssemblyHost host = builder.Build();
 
 			// Access registered services here
@@ -29,7 +29,7 @@ namespace GitSearch2.Client {
 		}
 
 		private static void ConfigureServices( IServiceCollection services ) {
-			services.AddSingleton<IUrlGenerator, BitBucketUrlGenerator>();
+			services.AddSingleton<IUrlGenerator, GitHubUrlGenerator>();
 		}
 	}
 }

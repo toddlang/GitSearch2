@@ -241,9 +241,9 @@ namespace GitSearch2.Indexer {
 
 		private static string GetPrNumber( Commit commit ) {
 			string prNumber = string.Empty;
-			if( commit.Message.StartsWith( MergePrNumberToken ) ) {
+			 if( commit.Message.StartsWith( MergePrNumberToken ) ) {
 				int prStart = commit.Message.IndexOf( MergePrNumberToken ) + MergePrNumberToken.Length;
-				int prEnd = commit.Message.IndexOf( " in " );
+				int prEnd = commit.Message.IndexOf( " ", prStart );
 				int length = prEnd - prStart;
 				if (length <= 0) {
 					return string.Empty;
@@ -255,7 +255,19 @@ namespace GitSearch2.Indexer {
 		}
 
 		private static bool IsMergeInto( Commit commit ) {
-			return ( commit.Message.Contains( "Merge" ) && commit.Message.Contains( "into" ) );
+			int mergeLine = commit.Message.IndexOf( "Merge" );
+
+			if (mergeLine == -1) {
+				return false;
+			}
+
+			int firstLine = commit.Message.IndexOf( "\n", mergeLine );
+			if (firstLine == -1) {
+				firstLine = commit.Message.Length;
+			}
+
+			string lineText = commit.Message[mergeLine..firstLine];
+			return ( lineText.Contains( "Merge" ) && lineText.Contains( "into" ) );
 		}
 	}
 }
