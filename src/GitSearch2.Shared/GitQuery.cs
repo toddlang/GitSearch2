@@ -1,7 +1,7 @@
 using System;
 
 namespace GitSearch2.Shared {
-	public sealed class GitQuery : IEquatable<GitQuery> {
+	public sealed record GitQuery {
 
 		public GitQuery(
 			string searchTerm,
@@ -30,28 +30,5 @@ namespace GitSearch2.Shared {
 		public int StartRecord { get; }
 
 		public int MaximumRecords { get; }
-
-		public bool Equals( GitQuery other ) {
-			if( other is null ) {
-				return false;
-			}
-
-			if( ReferenceEquals( other, this ) ) {
-				return true;
-			}
-
-			return
-				string.Equals( SearchTerm, other.SearchTerm, StringComparison.Ordinal )
-				&& StartRecord == other.StartRecord
-				&& MaximumRecords == other.MaximumRecords;
-		}
-
-		public override bool Equals( object obj ) {
-			return Equals( obj as GitQuery );
-		}
-
-		public override int GetHashCode() {
-			return HashCode.Combine( SearchTerm, StartRecord, MaximumRecords );
-		}
 	}
 }

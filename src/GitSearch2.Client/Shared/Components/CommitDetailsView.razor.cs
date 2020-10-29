@@ -4,7 +4,7 @@ using GitSearch2.Shared;
 using Microsoft.AspNetCore.Components;
 
 namespace GitSearch2.Client.Shared.Components {
-	public class CommitDetailsViewBase: ComponentBase {
+	public partial class CommitDetailsView {
 
 		[Parameter] public CommitDetails Details { get; set; }
 
@@ -22,9 +22,9 @@ namespace GitSearch2.Client.Shared.Components {
 			string repo = Details.Repo;
 			string project = Details.Project;
 
-			(string Project, string Repo, string Sha) converted = HandleSubRepo( Details.Description, project, repo, Details.CommitId );
-			repo = converted.Repo;
-			project = converted.Project;
+			(string Project, string Repo, string Sha) = HandleSubRepo( Details.Description, project, repo, Details.CommitId );
+			repo = Repo;
+			project = Project;
 
 			IUrlGenerator urlGenerator = RepoIdentifier.GetUrlGenerator( Details.OriginId );
 			CommitUrl = urlGenerator.CommitUrl( Details );
@@ -50,8 +50,8 @@ namespace GitSearch2.Client.Shared.Components {
 			string subRepo = line["subrepo:".Length..].Trim();
 			line = description.FirstOrDefault( d => d.StartsWith( "subrepo-id:" ) );
 			string subRepoId = line["subrepo-id:".Length..].Trim();
-			(string Project, string Repo) converted = ConvertSubRepo( subRepo, project, repo );
-			return (converted.Project, converted.Repo, subRepoId);
+			(string Project, string Repo) = ConvertSubRepo( subRepo, project, repo );
+			return (Project, Repo, subRepoId);
 		}
 
 		private static (string Project, string Repo) ConvertSubRepo( string subrepo, string project, string repo ) {

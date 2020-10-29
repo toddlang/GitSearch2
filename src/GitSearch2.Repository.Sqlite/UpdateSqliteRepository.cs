@@ -10,8 +10,9 @@ namespace GitSearch2.Repository.Sqlite {
 		private const string SchemaId = "15c8b53ab898475497ad37cf968b93aa";
 		private const int TargetSchema = 2;
 
-		public UpdateSqliteRepository( IDb db ):
-			base( db ) {
+		public UpdateSqliteRepository(
+			IDb db
+		) : base( db ) {
 		}
 
 		void IUpdateRepository.Initialize() {
@@ -163,7 +164,10 @@ namespace GitSearch2.Repository.Sqlite {
 			return Db.ExecuteSingleReader( sql, NoParameters, Db.LoadDateTimeOffset );
 		}
 
-		bool IUpdateRepository.UpdateInProgress( string repo, string project ) {
+		bool IUpdateRepository.UpdateInProgress(
+			string repo,
+			string project
+		) {
 			const string sql = @"
 				SELECT
 					COUNT(*)
@@ -184,7 +188,10 @@ namespace GitSearch2.Repository.Sqlite {
 			return ( count > 0 );
 		}
 
-		UpdateSession IUpdateRepository.GetScheduledUpdate( string repo, string project ) {
+		UpdateSession IUpdateRepository.GetScheduledUpdate(
+			string repo,
+			string project
+		) {
 			const string sql = @"
 				SELECT
 					SESSION,

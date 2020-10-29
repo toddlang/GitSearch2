@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 using System.Threading.Tasks;
 
 namespace GitSearch2.Repository.SqlServer {
-	internal sealed class SqlServerDb: IDb {
+	internal sealed class SqlServerDb : IDb {
 
 		private readonly string _connectionString;
 
@@ -94,50 +94,46 @@ namespace GitSearch2.Repository.SqlServer {
 
 		public async Task ExecuteNonQueryAsync( string sql ) {
 
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				await connection.OpenAsync();
+			using var connection = new SqlConnection( _connectionString );
+			await connection.OpenAsync();
 
-				await PerformNonQueryAsync( connection, sql );
+			await PerformNonQueryAsync( connection, sql );
 
-				connection.Close();
-			}
+			connection.Close();
 		}
 
 		public void ExecuteNonQuery( string sql ) {
 
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				connection.Open();
+			using var connection = new SqlConnection( _connectionString );
+			connection.Open();
 
-				PerformNonQuery( connection, sql );
+			PerformNonQuery( connection, sql );
 
-				connection.Close();
-			}
+			connection.Close();
 		}
 
 		public async Task ExecuteNonQueryAsync(
 			string sql,
 			IDictionary<string, object> parameters
 		) {
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				await connection.OpenAsync();
+			using var connection = new SqlConnection( _connectionString );
+			await connection.OpenAsync();
 
-				await PerformNonQueryAsync( connection, sql, parameters );
+			await PerformNonQueryAsync( connection, sql, parameters );
 
-				connection.Close();
-			}
+			connection.Close();
 		}
 
 		public void ExecuteNonQuery(
 			string sql,
 			IDictionary<string, object> parameters
 		) {
-			using( var connection = new SqlConnection( _connectionString ) ) {
-				connection.Open();
+			using var connection = new SqlConnection( _connectionString );
+			connection.Open();
 
-				PerformNonQuery( connection, sql, parameters );
+			PerformNonQuery( connection, sql, parameters );
 
-				connection.Close();
-			}
+			connection.Close();
 		}
 
 		public async Task<IEnumerable<T>> ExecuteReaderAsync<T>(
@@ -244,59 +240,55 @@ namespace GitSearch2.Repository.SqlServer {
 			return result;
 		}
 
-		private async Task PerformNonQueryAsync(
+		private static async Task PerformNonQueryAsync(
 			SqlConnection connection,
 			string sql
 		) {
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
+			using SqlCommand command = connection.CreateCommand();
+			command.CommandText = sql;
 
-				await command.ExecuteNonQueryAsync();
-			}
+			await command.ExecuteNonQueryAsync();
 		}
 
-		private void PerformNonQuery(
+		private static void PerformNonQuery(
 			SqlConnection connection,
 			string sql
 		) {
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
+			using SqlCommand command = connection.CreateCommand();
+			command.CommandText = sql;
 
-				command.ExecuteNonQuery();
-			}
+			command.ExecuteNonQuery();
 		}
 
-		private async Task PerformNonQueryAsync(
+		private static async Task PerformNonQueryAsync(
 			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters
 		) {
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-				foreach( string key in parameters.Keys ) {
-					command.Parameters.AddWithValue( key, parameters[key] );
-				}
-
-				await command.ExecuteNonQueryAsync();
+			using SqlCommand command = connection.CreateCommand();
+			command.CommandText = sql;
+			foreach( string key in parameters.Keys ) {
+				command.Parameters.AddWithValue( key, parameters[key] );
 			}
+
+			await command.ExecuteNonQueryAsync();
 		}
 
-		private void PerformNonQuery(
+		private static void PerformNonQuery(
 			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters
 		) {
-			using( SqlCommand command = connection.CreateCommand() ) {
-				command.CommandText = sql;
-				foreach( string key in parameters.Keys ) {
-					command.Parameters.AddWithValue( key, parameters[key] );
-				}
-
-				command.ExecuteNonQuery();
+			using SqlCommand command = connection.CreateCommand();
+			command.CommandText = sql;
+			foreach( string key in parameters.Keys ) {
+				command.Parameters.AddWithValue( key, parameters[key] );
 			}
+
+			command.ExecuteNonQuery();
 		}
 
-		private async Task<IEnumerable<T>> PerformReaderAsync<T>(
+		private static async Task<IEnumerable<T>> PerformReaderAsync<T>(
 			SqlConnection connection,
 			string sql,
 			Func<DbDataReader, T> loader
@@ -305,20 +297,19 @@ namespace GitSearch2.Repository.SqlServer {
 			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 
-				using( DbDataReader reader = await command.ExecuteReaderAsync() ) {
-					if( reader.HasRows ) {
-						while( await reader.ReadAsync() ) {
-							result.Add( loader( reader ) );
-						}
+				using DbDataReader reader = await command.ExecuteReaderAsync();
+				if( reader.HasRows ) {
+					while( await reader.ReadAsync() ) {
+						result.Add( loader( reader ) );
 					}
-
-					reader.Close();
 				}
+
+				reader.Close();
 			}
 			return result;
 		}
 
-		private IEnumerable<T> PerformReader<T>(
+		private static IEnumerable<T> PerformReader<T>(
 			SqlConnection connection,
 			string sql,
 			Func<DbDataReader, T> loader
@@ -327,20 +318,19 @@ namespace GitSearch2.Repository.SqlServer {
 			using( SqlCommand command = connection.CreateCommand() ) {
 				command.CommandText = sql;
 
-				using( SqlDataReader reader = command.ExecuteReader() ) {
-					if( reader.HasRows ) {
-						while( reader.Read() ) {
-							result.Add( loader( reader ) );
-						}
+				using SqlDataReader reader = command.ExecuteReader();
+				if( reader.HasRows ) {
+					while( reader.Read() ) {
+						result.Add( loader( reader ) );
 					}
-
-					reader.Close();
 				}
+
+				reader.Close();
 			}
 			return result;
 		}
 
-		private async Task<IEnumerable<T>> PerformReaderAsync<T>(
+		private static async Task<IEnumerable<T>> PerformReaderAsync<T>(
 			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters,
@@ -354,21 +344,20 @@ namespace GitSearch2.Repository.SqlServer {
 					command.Parameters.AddWithValue( key, parameters[key] );
 				}
 
-				using( DbDataReader reader = await command.ExecuteReaderAsync() ) {
-					if( reader.HasRows ) {
-						while( await reader.ReadAsync() ) {
-							result.Add( loader( reader ) );
-						}
+				using DbDataReader reader = await command.ExecuteReaderAsync();
+				if( reader.HasRows ) {
+					while( await reader.ReadAsync() ) {
+						result.Add( loader( reader ) );
 					}
-
-					reader.Close();
 				}
+
+				reader.Close();
 			}
 
 			return result;
 		}
 
-		private IEnumerable<T> PerformReader<T>(
+		private static IEnumerable<T> PerformReader<T>(
 			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters,
@@ -382,21 +371,20 @@ namespace GitSearch2.Repository.SqlServer {
 					command.Parameters.AddWithValue( key, parameters[key] );
 				}
 
-				using( SqlDataReader reader = command.ExecuteReader() ) {
-					if( reader.HasRows ) {
-						while( reader.Read() ) {
-							result.Add( loader( reader ) );
-						}
+				using SqlDataReader reader = command.ExecuteReader();
+				if( reader.HasRows ) {
+					while( reader.Read() ) {
+						result.Add( loader( reader ) );
 					}
-
-					reader.Close();
 				}
+
+				reader.Close();
 			}
 
 			return result;
 		}
 
-		private async Task<T> PerformSingleReaderAsync<T>(
+		private static async Task<T> PerformSingleReaderAsync<T>(
 			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters,
@@ -410,20 +398,19 @@ namespace GitSearch2.Repository.SqlServer {
 					command.Parameters.AddWithValue( key, parameters[key] );
 				}
 
-				using( DbDataReader reader = await command.ExecuteReaderAsync() ) {
-					if( reader.HasRows ) {
-						if( await reader.ReadAsync() ) {
-							result = loader( reader );
-						}
+				using DbDataReader reader = await command.ExecuteReaderAsync();
+				if( reader.HasRows ) {
+					if( await reader.ReadAsync() ) {
+						result = loader( reader );
 					}
-					reader.Close();
 				}
+				reader.Close();
 			}
 
 			return result;
 		}
 
-		private T PerformSingleReader<T>(
+		private static T PerformSingleReader<T>(
 			SqlConnection connection,
 			string sql,
 			IDictionary<string, object> parameters,
@@ -437,14 +424,13 @@ namespace GitSearch2.Repository.SqlServer {
 					command.Parameters.AddWithValue( key, parameters[key] );
 				}
 
-				using( SqlDataReader reader = command.ExecuteReader() ) {
-					if( reader.HasRows ) {
-						if( reader.Read() ) {
-							result = loader( reader );
-						}
+				using SqlDataReader reader = command.ExecuteReader();
+				if( reader.HasRows ) {
+					if( reader.Read() ) {
+						result = loader( reader );
 					}
-					reader.Close();
 				}
+				reader.Close();
 			}
 
 			return result;

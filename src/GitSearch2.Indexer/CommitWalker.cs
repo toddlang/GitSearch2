@@ -247,8 +247,9 @@ namespace GitSearch2.Indexer {
 			return result;
 		}
 
-		private static string GetPrNumber( Commit commit ) {
-			string prNumber = string.Empty;
+		private static string GetPrNumber(
+			Commit commit
+		) {
 			if( commit.Message.StartsWith( MergePrNumberToken ) ) {
 				int prStart = commit.Message.IndexOf( MergePrNumberToken ) + MergePrNumberToken.Length;
 				int prEnd = commit.Message.IndexOf( " ", prStart );
@@ -256,13 +257,15 @@ namespace GitSearch2.Indexer {
 				if( length <= 0 ) {
 					return string.Empty;
 				}
-				prNumber = commit.Message.Substring( prStart, length ).Trim();
+				return commit.Message.Substring( prStart, length ).Trim();
 			}
 
-			return prNumber;
+			return string.Empty;
 		}
 
-		private static bool IsMergeInto( Commit commit ) {
+		private static bool IsMergeInto(
+			Commit commit
+		) {
 			int mergeLine = commit.Message.IndexOf( "Merge" );
 
 			if( mergeLine == -1 ) {

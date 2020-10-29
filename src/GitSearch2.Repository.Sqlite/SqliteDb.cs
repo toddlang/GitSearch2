@@ -6,12 +6,12 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 
 namespace GitSearch2.Repository.Sqlite {
-	internal sealed class SqliteDb: IDb {
+	internal sealed class SqliteDb : IDb {
 
 		private readonly string _connectionString;
 
 		public SqliteDb( IOptions<SqliteOptions> options )
-			:this( options.Value ) {
+			: this( options.Value ) {
 		}
 
 		public SqliteDb( SqliteOptions options ) {

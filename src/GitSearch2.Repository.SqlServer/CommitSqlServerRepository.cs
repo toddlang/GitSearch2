@@ -13,8 +13,9 @@ namespace GitSearch2.Repository.SqlServer {
 		private const string SchemaId = "b914f541f1564495802d10f5ee208a41";
 		private const int TargetSchema = 1;
 
-		public CommitSqlServerRepository( IDb db ) :
-			base( db ) {
+		public CommitSqlServerRepository(
+			IDb db
+		) : base( db ) {
 		}
 
 		void ICommitRepository.Initialize() {
@@ -94,7 +95,9 @@ namespace GitSearch2.Repository.SqlServer {
 			Db.ExecuteNonQuery( sqlCreateFulltext );
 		}
 
-		protected override void UpdateSchema( int targetSchema ) {
+		protected override void UpdateSchema(
+			int targetSchema
+		) {
 			if( targetSchema == 2 ) {
 				const string sqlAddOrigin = @"
 					ALTER TABLE GIT_COMMIT
@@ -266,7 +269,9 @@ namespace GitSearch2.Repository.SqlServer {
 			return ( hasRow == 1 );
 		}
 
-		void ICommitRepository.Add( CommitDetails commit ) {
+		void ICommitRepository.Add(
+			CommitDetails commit
+		) {
 			string description = commit.Description.Any() ? commit.Description.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
 			string files = commit.Files.Any() ? commit.Files.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
 			string mergeCommits = commit.Commits.Any() ? commit.Commits.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
@@ -320,7 +325,9 @@ namespace GitSearch2.Repository.SqlServer {
 			Db.ExecuteNonQuery( sql, parameters );
 		}
 
-		async Task ICommitRepository.AddAsync( CommitDetails commit ) {
+		async Task ICommitRepository.AddAsync(
+			CommitDetails commit
+		) {
 			string description = commit.Description.Any() ? commit.Description.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
 			string files = commit.Files.Any() ? commit.Files.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
 			string mergeCommits = commit.Commits.Any() ? commit.Commits.Aggregate( ( current, next ) => current + Environment.NewLine + next ) : string.Empty;
@@ -374,7 +381,9 @@ namespace GitSearch2.Repository.SqlServer {
 			await Db.ExecuteNonQueryAsync( sql, parameters );
 		}
 
-		private CommitDetails ReadCommit( DbDataReader reader ) {
+		private CommitDetails ReadCommit(
+			DbDataReader reader
+		) {
 			string dbCommitId = Db.GetString( reader, "COMMIT_ID" );
 			string dbDescription = Db.GetString( reader, "DESCRIPTION" );
 			string dbRepo = Db.GetString( reader, "REPO" );

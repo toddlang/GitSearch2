@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GitSearch2.Indexer {
-	internal sealed class RepoProjectName: IEquatable<RepoProjectName> {
+	internal sealed class RepoProjectName : IEquatable<RepoProjectName> {
 
 		public RepoProjectName(
 			string repo,
@@ -17,11 +17,11 @@ namespace GitSearch2.Indexer {
 		public string Project { get; }
 
 		public bool Equals( [AllowNull] RepoProjectName other ) {
-			if (other is null) {
+			if( other is null ) {
 				return false;
 			}
 
-			if (ReferenceEquals(other, this)) {
+			if( ReferenceEquals( other, this ) ) {
 				return true;
 			}
 

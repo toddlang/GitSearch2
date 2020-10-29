@@ -3,7 +3,7 @@ using GitSearch2.Repository;
 using LibGit2Sharp;
 
 namespace GitSearch2.Indexer {
-	internal sealed class LoopingExecutor: IExecutor {
+	internal sealed class LoopingExecutor : IExecutor {
 
 		private readonly ICommitWalker _walker;
 		private readonly IUpdateRepository _updateRepository;

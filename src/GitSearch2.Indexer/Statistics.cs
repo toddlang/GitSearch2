@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 namespace GitSearch2.Indexer {
-	internal sealed class Statistics: IStatistics {
+	internal sealed class Statistics : IStatistics {
 
 		private readonly HashSet<string> _visited;
 		private readonly Stack<string> _toVisit;

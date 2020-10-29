@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 
 namespace GitSearch2.Repository.Sqlite {
 
 	public class SqliteRepository {
 
-		public SqliteRepository( IDb db ) {
-			if ( db is null ) { 
+		public SqliteRepository(
+			IDb db
+		) {
+			if( db is null ) {
 				throw new ArgumentException( "IDb instance not specified.", nameof( db ) );
 			}
 
@@ -91,11 +92,14 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 
-		protected virtual void CreateSchema() {
+		protected virtual void CreateSchema(
+		) {
 			throw new NotImplementedException();
 		}
 
-		protected virtual void UpdateSchema( int targetSchema ) {
+		protected virtual void UpdateSchema(
+			int targetSchema
+		) {
 			throw new NotImplementedException();
 		}
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 namespace GitSearch2.Shared {
-	public sealed class CommitDetails : IEquatable<CommitDetails> {
+	public sealed record CommitDetails {
 
 		public CommitDetails(
 			IEnumerable<string> description,
@@ -75,28 +75,5 @@ namespace GitSearch2.Shared {
 		public bool IsMerge { get; }
 
 		public string OriginId { get; }
-
-		public bool Equals( CommitDetails other ) {
-			if( other is null ) {
-				return false;
-			}
-
-			if( ReferenceEquals( other, this ) ) {
-				return true;
-			}
-
-			// For the needs of this code we only care about the commit Id.
-
-			return CommitId.Equals( other.CommitId, StringComparison.Ordinal )
-				&& OriginId.Equals( other.OriginId, StringComparison.Ordinal );
-		}
-
-		public override bool Equals( object obj ) {
-			return Equals( obj as CommitDetails );
-		}
-
-		public override int GetHashCode() {
-			return HashCode.Combine( CommitId, OriginId );
-		}
 	}
 }

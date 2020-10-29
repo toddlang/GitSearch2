@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using LibGit2Sharp;
 
 namespace GitSearch2.Indexer {

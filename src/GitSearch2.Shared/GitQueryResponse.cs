@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 namespace GitSearch2.Shared {
-	public sealed class GitQueryResponse {
+	public sealed record GitQueryResponse {
 
 		public GitQueryResponse(
 			IEnumerable<CommitDetails> commits,

@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 
 namespace GitSearch2.Repository.SqlServer {
 	public class SqlServerRepository {
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
 
 		public SqlServerRepository(
 			IDb db
@@ -109,6 +107,5 @@ namespace GitSearch2.Repository.SqlServer {
 		protected virtual void UpdateSchema( int targetSchema ) {
 			throw new NotImplementedException();
 		}
-#pragma warning restore CA2100
 	}
 }

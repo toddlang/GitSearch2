@@ -72,7 +72,7 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		protected override void UpdateSchema( int targetSchema ) {
-			if (targetSchema == 2) {
+			if( targetSchema == 2 ) {
 				const string sqlAddOrigin = @"
 					ALTER TABLE GIT_COMMIT
 					ADD ORIGIN_ID NVARCHAR(32) NOT NULL
@@ -82,7 +82,7 @@ namespace GitSearch2.Repository.Sqlite {
 				Db.ExecuteNonQuery( sqlAddOrigin );
 			} else {
 				throw new InvalidOperationException();
-			}			
+			}
 		}
 
 		int ICommitRepository.CountCommits() {

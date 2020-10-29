@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using Microsoft.Extensions.Options;
 
 namespace GitSearch2.Repository.SqlServer {
 	public sealed class UpdateSqlServerRepository : SqlServerRepository, IUpdateRepository {
@@ -10,8 +9,9 @@ namespace GitSearch2.Repository.SqlServer {
 		private const string SchemaId = "15c8b53ab898475497ad37cf968b93aa";
 		private const int TargetSchema = 2;
 
-		public UpdateSqlServerRepository( IDb db ) :
-			base( db ) {
+		public UpdateSqlServerRepository(
+			IDb db
+		) : base( db ) {
 		}
 
 		void IUpdateRepository.Initialize() {
@@ -246,7 +246,9 @@ namespace GitSearch2.Repository.SqlServer {
 			return new UpdateSession( session, repo, project, null, null, 0 );
 		}
 
-		private UpdateSession ReadProgress( DbDataReader reader ) {
+		private UpdateSession ReadProgress(
+			DbDataReader reader
+		) {
 			string dbSession = Db.GetString( reader, "SESSION" );
 			string dbRepo = Db.GetString( reader, "REPO" );
 			string dbProject = Db.GetString( reader, "PROJECT" );

@@ -27,7 +27,7 @@ namespace GitSearch2.Server.Controllers {
 		[ResponseCache( Duration = 0, Location = ResponseCacheLocation.None, NoStore = true )]
 		public async Task<ActionResult<GitQueryResponse>> SearchAsync( [FromBody] GitQuery query ) {
 
-			if (query == default) {
+			if( query == default ) {
 				return BadRequest();
 			}
 
@@ -40,7 +40,7 @@ namespace GitSearch2.Server.Controllers {
 
 				return Ok( new GitQueryResponse( result, "" ) );
 
-			} catch (Exception ex) {
+			} catch( Exception ex ) {
 
 				_logger.LogError( ex, "Error performing query." );
 
