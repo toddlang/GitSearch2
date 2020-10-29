@@ -1,7 +1,6 @@
 using System.Text;
-using GitSearch2.Shared;
 
-namespace GitSearch2.Client.Service {
+namespace GitSearch2.Shared {
 
 	internal sealed class GitHubUrlGenerator : IUrlGenerator {
 

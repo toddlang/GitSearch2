@@ -1,6 +1,5 @@
-using GitSearch2.Shared;
 
-namespace GitSearch2.Client.Service {
+namespace GitSearch2.Shared {
 	internal sealed class BitBucketUrlGenerator : IUrlGenerator {
 		string IUrlGenerator.CommitUrl( CommitDetails details ) {
 			return $@"https://git.dev.d2l/projects/{details.Project}/repos/{details.Repo}/commits/{details.CommitId}";

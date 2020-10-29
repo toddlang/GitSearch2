@@ -11,7 +11,7 @@ namespace GitSearch2.Repository.Sqlite {
 
 		private readonly string[] EnvironmentNewLine = new string[] { Environment.NewLine };
 		private const string SchemaId = "b914f541f1564495802d10f5ee208a41";
-		private const int TargetSchema = 1;
+		private const int TargetSchema = 2;
 
 		public CommitSqliteRepository( IDb db ) :
 			base( db ) {
@@ -35,6 +35,7 @@ namespace GitSearch2.Repository.Sqlite {
 					FILES TEXT NOT NULL,
 					PR_NUMBER NVARCHAR(32) NOT NULL,
 					MERGE_COMMITS TEXT NOT NULL,
+					ORIGIN_ID NVARCHAR(32) NOT NULL,
 					PRIMARY KEY(COMMIT_ID, PROJECT, REPO)
 				)
 			;";
@@ -71,7 +72,17 @@ namespace GitSearch2.Repository.Sqlite {
 		}
 
 		protected override void UpdateSchema( int targetSchema ) {
-			throw new InvalidOperationException();
+			if (targetSchema == 2) {
+				const string sqlAddOrigin = @"
+					ALTER TABLE GIT_COMMIT
+					ADD ORIGIN_ID NVARCHAR(32) NOT NULL
+						DEFAULT ""github""
+				;";
+
+				Db.ExecuteNonQuery( sqlAddOrigin );
+			} else {
+				throw new InvalidOperationException();
+			}			
 		}
 
 		int ICommitRepository.CountCommits() {
@@ -115,7 +126,8 @@ namespace GitSearch2.Repository.Sqlite {
 					GC.COMMIT_DATE,
 					GC.FILES,
 					GC.PR_NUMBER,
-					GC.MERGE_COMMITS
+					GC.MERGE_COMMITS,
+					GC.ORIGIN_ID
 				FROM 
 					GIT_COMMIT AS GC
 					INNER JOIN SEARCHABLE_COMMIT AS SC
@@ -152,7 +164,8 @@ namespace GitSearch2.Repository.Sqlite {
 					GC.COMMIT_DATE,
 					GC.FILES,
 					GC.PR_NUMBER,
-					GC.MERGE_COMMITS
+					GC.MERGE_COMMITS,
+					GC.ORIGIN_ID
 				FROM 
 					GIT_COMMIT AS GC
 					INNER JOIN SEARCHABLE_COMMIT AS SC
@@ -244,7 +257,8 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@files", files },
 				{ "@project", commit.Project },
 				{ "@prNumber", commit.PR },
-				{ "@mergeCommits", mergeCommits }
+				{ "@mergeCommits", mergeCommits },
+				{ "@originId", commit.OriginId }
 			};
 
 			const string sqlInsertCommit = @"
@@ -259,7 +273,8 @@ namespace GitSearch2.Repository.Sqlite {
 					COMMIT_DATE,
 					FILES,
 					PR_NUMBER,
-					MERGE_COMMITS
+					MERGE_COMMITS,
+					ORIGIN_ID
 				)
 				VALUES
 				(
@@ -272,7 +287,8 @@ namespace GitSearch2.Repository.Sqlite {
 					@commitDate,
 					@files,
 					@prNumber,
-					@mergeCommits
+					@mergeCommits,
+					@originId
 				)
 			;";
 
@@ -322,7 +338,8 @@ namespace GitSearch2.Repository.Sqlite {
 				{ "@files", files },
 				{ "@project", commit.Project },
 				{ "@prNumber", commit.PR },
-				{ "@mergeCommits", mergeCommits }
+				{ "@mergeCommits", mergeCommits },
+				{ "@originId", commit.OriginId }
 			};
 
 			const string sqlInsertCommit = @"
@@ -337,7 +354,8 @@ namespace GitSearch2.Repository.Sqlite {
 					COMMIT_DATE,
 					FILES,
 					PR_NUMBER,
-					MERGE_COMMITS
+					MERGE_COMMITS,
+					ORIGIN_ID
 				)
 				VALUES
 				(
@@ -350,7 +368,8 @@ namespace GitSearch2.Repository.Sqlite {
 					@commitDate,
 					@files,
 					@prNumber,
-					@mergeCommits
+					@mergeCommits,
+					@originId
 				)
 			;";
 
@@ -395,6 +414,7 @@ namespace GitSearch2.Repository.Sqlite {
 			string dbProject = Db.GetString( reader, "PROJECT" );
 			string dbPrNumber = Db.GetString( reader, "PR_NUMBER" );
 			string dbCommits = Db.GetString( reader, "MERGE_COMMITS" );
+			string originId = Db.GetString( reader, "ORIGIN_ID" );
 
 			return new CommitDetails(
 				authorEmail: dbAuthorEmail,
@@ -407,7 +427,8 @@ namespace GitSearch2.Repository.Sqlite {
 				project: dbProject,
 				pr: dbPrNumber,
 				commits: dbCommits.Split( EnvironmentNewLine, StringSplitOptions.None ),
-				isMerge: false
+				isMerge: false,
+				originId: originId
 			);
 		}
 	}

@@ -22,6 +22,7 @@ namespace GitSearch2.Indexer.Tests.Unit {
 		private Mock<IGitRepoProvider> _gitRepoProvider;
 		private Mock<IRepository> _repository;
 		private Mock<IQueryableCommitLog> _commits;
+		private Mock<IRepoWebsiteIdentifier> _identifier;
 
 		[SetUp]
 		public void Setup() {
@@ -31,6 +32,8 @@ namespace GitSearch2.Indexer.Tests.Unit {
 			_gitRepoProvider = new Mock<IGitRepoProvider>( MockBehavior.Strict );
 			_repository = new Mock<IRepository>( MockBehavior.Strict );
 			_commits = new Mock<IQueryableCommitLog>( MockBehavior.Strict );
+			_identifier = new Mock<IRepoWebsiteIdentifier>( MockBehavior.Strict );
+			_identifier.Setup( i => i.GetRepoOriginId( It.IsAny<string>() ) ).Returns( "github" );
 			_statisticsDisplay.Setup( sd => sd.UpdateStatistics( It.IsAny<IStatistics>() ) );
 
 			SetupNameParser( _nameParser );
@@ -41,7 +44,8 @@ namespace GitSearch2.Indexer.Tests.Unit {
 				_commitRepository.Object,
 				_nameParser.Object,
 				_statisticsDisplay.Object,
-				_gitRepoProvider.Object );
+				_gitRepoProvider.Object,
+				_identifier.Object );
 		}
 
 		[Test]

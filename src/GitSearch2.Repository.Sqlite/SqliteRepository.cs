@@ -5,11 +5,10 @@ using System.Data.Common;
 namespace GitSearch2.Repository.Sqlite {
 
 	public class SqliteRepository {
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
 
 		public SqliteRepository( IDb db ) {
 			if ( db is null ) { 
-				throw new ArgumentException( nameof( db ) );
+				throw new ArgumentException( "IDb instance not specified.", nameof( db ) );
 			}
 
 			Db = db;
@@ -100,6 +99,5 @@ namespace GitSearch2.Repository.Sqlite {
 			throw new NotImplementedException();
 		}
 
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
 	}
 }

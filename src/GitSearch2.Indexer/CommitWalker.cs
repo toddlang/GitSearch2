@@ -17,6 +17,7 @@ namespace GitSearch2.Indexer {
 		private readonly ICommitRepository _commitRepository;
 		private readonly IStatisticsDisplay _statisticsDisplay;
 		private readonly IGitRepoProvider _gitRepoProvider;
+		private readonly IRepoWebsiteIdentifier _repoWebsiteIdentifier;
 
 		private IStatistics _statistics;
 
@@ -24,12 +25,14 @@ namespace GitSearch2.Indexer {
 			ICommitRepository commitRepository,
 			INameParser repoNameParser,
 			IStatisticsDisplay statisticsDisplay,
-			IGitRepoProvider gitRepoProvider
+			IGitRepoProvider gitRepoProvider,
+			IRepoWebsiteIdentifier repoWebsiteIdentifier
 		) {
 			_commitRepository = commitRepository;
 			_repoNameParser = repoNameParser;
 			_statisticsDisplay = statisticsDisplay;
 			_gitRepoProvider = gitRepoProvider;
+			_repoWebsiteIdentifier = repoWebsiteIdentifier;
 		}
 
 		int ICommitWalker.Run() {
@@ -41,6 +44,7 @@ namespace GitSearch2.Indexer {
 
 			IRepository gitRepo = _gitRepoProvider.GetRepo();
 			RepoProjectName name = _repoNameParser.Parse( gitRepo );
+			string originId = _repoWebsiteIdentifier.GetRepoOriginId( gitRepo.Network.Remotes.FirstOrDefault()?.Url );
 
 			// Short-circuit pre-history so that we never try to walk
 			// farther back than this point.
@@ -61,7 +65,7 @@ namespace GitSearch2.Indexer {
 					// master though, so we have no PR and no merge via.
 					if( parentCount == 1 ) {
 						_statistics.ProcessedCommit();
-						WriteCommit( current, name, "", Enumerable.Empty<string>() );
+						WriteCommit( current, name, "", originId, Enumerable.Empty<string>() );
 
 					} else if( parentCount > 1 ) {
 						toVisit.Push( current.Sha );
@@ -92,7 +96,7 @@ namespace GitSearch2.Indexer {
 					if( !visited.Contains( target.Sha ) ) {
 						_statistics.ProcessedCommit();
 						if( !IsMergeInto( target ) ) {
-							WalkMerge( gitRepo, mergeVia, name, prNumber, visited, toVisit, target );
+							WalkMerge( gitRepo, mergeVia, name, prNumber, visited, toVisit, target, originId );
 
 						} else {
 							visited.Add( target.Sha );
@@ -142,7 +146,8 @@ namespace GitSearch2.Indexer {
 			string prNumber,
 			HashSet<string> visited,
 			Stack<string> toVisit,
-			Commit target
+			Commit target,
+			string originId
 		) {
 			int parentCount = target.Parents.Count();
 			// We only get in here if a node hasn't been visited before so it's
@@ -161,7 +166,7 @@ namespace GitSearch2.Indexer {
 			if( parentCount == 1 ) {
 				// As single parent is a "real" commit and can be committed
 				// to the database
-				WriteCommit( target, name, prNumber, mergeVia );
+				WriteCommit( target, name, prNumber, originId, mergeVia );
 
 				Commit current = target.Parents.First();
 				while( current != null && !visited.Contains( current.Sha ) && !current.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ) {
@@ -169,9 +174,9 @@ namespace GitSearch2.Indexer {
 					if( parentCount == 1 ) {
 						visited.Add( current.Sha );
 						_statistics.ProcessedCommit();
-						WriteCommit( current, name, prNumber, newMergeVia );
+						WriteCommit( current, name, prNumber, originId, newMergeVia );
 					} else {
-						WalkMerge( gitRepo, newMergeVia, name, prNumber, visited, toVisit, current );
+						WalkMerge( gitRepo, newMergeVia, name, prNumber, visited, toVisit, current, originId );
 					}
 					current = current.Parents.FirstOrDefault();
 					_statisticsDisplay.UpdateStatistics( _statistics );
@@ -189,7 +194,7 @@ namespace GitSearch2.Indexer {
 					if( !visited.Contains( parent.Sha ) && !parent.Sha.Equals( PreHistoryId, StringComparison.Ordinal ) ) {
 						_statistics.ProcessedCommit();
 						if( !IsMergeInto( parent ) ) {
-							WalkMerge( gitRepo, newMergeVia, name, newPrNumber, visited, toVisit, parent );
+							WalkMerge( gitRepo, newMergeVia, name, newPrNumber, visited, toVisit, parent, originId );
 						} else {
 							visited.Add( parent.Sha );
 						}
@@ -202,11 +207,12 @@ namespace GitSearch2.Indexer {
 			Commit commit,
 			RepoProjectName name,
 			string prNumber,
+			string originId,
 			IEnumerable<string> mergeVia
 		) {
 			if( !_commitRepository.ContainsCommit( commit.Sha, name.Project, name.Repo ) ) {
 				_statistics.WroteCommit();
-				CommitDetails commitInfo = CommitInfoFromCommit( commit, name.Project, name.Repo, prNumber, mergeVia );
+				CommitDetails commitInfo = CommitInfoFromCommit( commit, name.Project, name.Repo, prNumber, originId, mergeVia );
 				_commitRepository.Add( commitInfo );
 			}
 		}
@@ -216,6 +222,7 @@ namespace GitSearch2.Indexer {
 			string projectName,
 			string repoName,
 			string prNumber,
+			string originId,
 			IEnumerable<string> mergeVia
 		) {
 			IEnumerable<string> files = _gitRepoProvider.GetCommitFiles( commit );
@@ -233,7 +240,8 @@ namespace GitSearch2.Indexer {
 				project: projectName,
 				repo: repoName,
 				commits: mergeVia,
-				isMerge: false
+				isMerge: false,
+				originId: originId
 			);
 
 			return result;
@@ -241,11 +249,11 @@ namespace GitSearch2.Indexer {
 
 		private static string GetPrNumber( Commit commit ) {
 			string prNumber = string.Empty;
-			 if( commit.Message.StartsWith( MergePrNumberToken ) ) {
+			if( commit.Message.StartsWith( MergePrNumberToken ) ) {
 				int prStart = commit.Message.IndexOf( MergePrNumberToken ) + MergePrNumberToken.Length;
 				int prEnd = commit.Message.IndexOf( " ", prStart );
 				int length = prEnd - prStart;
-				if (length <= 0) {
+				if( length <= 0 ) {
 					return string.Empty;
 				}
 				prNumber = commit.Message.Substring( prStart, length ).Trim();
@@ -257,12 +265,12 @@ namespace GitSearch2.Indexer {
 		private static bool IsMergeInto( Commit commit ) {
 			int mergeLine = commit.Message.IndexOf( "Merge" );
 
-			if (mergeLine == -1) {
+			if( mergeLine == -1 ) {
 				return false;
 			}
 
 			int firstLine = commit.Message.IndexOf( "\n", mergeLine );
-			if (firstLine == -1) {
+			if( firstLine == -1 ) {
 				firstLine = commit.Message.Length;
 			}
 

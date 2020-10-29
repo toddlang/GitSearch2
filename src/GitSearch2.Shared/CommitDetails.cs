@@ -15,7 +15,8 @@ namespace GitSearch2.Shared {
 			string project,
 			string pr,
 			IEnumerable<string> commits,
-			bool isMerge
+			bool isMerge,
+			string originId
 		) {
 			if( string.IsNullOrWhiteSpace( repo ) ) {
 				throw new ArgumentException( "Repo name not specified", nameof( repo ) );
@@ -33,6 +34,10 @@ namespace GitSearch2.Shared {
 				throw new ArgumentException( "CommitId not specified.", nameof( commitId ) );
 			}
 
+			if( string.IsNullOrWhiteSpace( originId ) ) {
+				throw new ArgumentException( "Origin not specified.", nameof( originId ) );
+			}
+
 			Description = description ?? throw new ArgumentException( "Description not specified.", nameof( description ) );
 			Repo = repo;
 			AuthorEmail = authorEmail;
@@ -44,6 +49,7 @@ namespace GitSearch2.Shared {
 			PR = pr;
 			Commits = commits ?? throw new ArgumentException( "Commits not specified.", nameof( commits ) );
 			IsMerge = isMerge;
+			OriginId = originId;
 		}
 
 		public IEnumerable<string> Description { get; }
@@ -68,6 +74,8 @@ namespace GitSearch2.Shared {
 
 		public bool IsMerge { get; }
 
+		public string OriginId { get; }
+
 		public bool Equals( CommitDetails other ) {
 			if( other is null ) {
 				return false;
@@ -79,7 +87,8 @@ namespace GitSearch2.Shared {
 
 			// For the needs of this code we only care about the commit Id.
 
-			return CommitId.Equals( other.CommitId, StringComparison.Ordinal );
+			return CommitId.Equals( other.CommitId, StringComparison.Ordinal )
+				&& OriginId.Equals( other.OriginId, StringComparison.Ordinal );
 		}
 
 		public override bool Equals( object obj ) {
@@ -87,7 +96,7 @@ namespace GitSearch2.Shared {
 		}
 
 		public override int GetHashCode() {
-			return CommitId.GetHashCode();
+			return HashCode.Combine( CommitId, OriginId );
 		}
 	}
 }

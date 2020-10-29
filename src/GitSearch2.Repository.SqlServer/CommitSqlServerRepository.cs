@@ -35,6 +35,7 @@ namespace GitSearch2.Repository.SqlServer {
 					FILES TEXT NOT NULL,
 					PR_NUMBER NVARCHAR(32) NOT NULL,
 					MERGE_COMMITS TEXT NOT NULL,
+					ORIGIN_ID NVARCHAR(32) NOT NULL,
 					CONSTRAINT PK_GIT_COMMIT PRIMARY KEY(COMMIT_ID, PROJECT, REPO)
 				)
 			;";
@@ -94,7 +95,17 @@ namespace GitSearch2.Repository.SqlServer {
 		}
 
 		protected override void UpdateSchema( int targetSchema ) {
-			throw new InvalidOperationException();
+			if( targetSchema == 2 ) {
+				const string sqlAddOrigin = @"
+					ALTER TABLE GIT_COMMIT
+					ADD ORIGIN_ID NVARCHAR(32) NOT NULL
+						DEFAULT ""github""
+				;";
+
+				Db.ExecuteNonQuery( sqlAddOrigin );
+			} else {
+				throw new InvalidOperationException();
+			}
 		}
 
 		int ICommitRepository.CountCommits() {
@@ -138,7 +149,8 @@ namespace GitSearch2.Repository.SqlServer {
 					GC.COMMIT_DATE,
 					GC.FILES,
 					GC.PR_NUMBER,
-					GC.MERGE_COMMITS
+					GC.MERGE_COMMITS,
+					GC.ORIGIN_ID
 				FROM 
 					GIT_COMMIT AS GC
 				WHERE 
@@ -176,7 +188,8 @@ namespace GitSearch2.Repository.SqlServer {
 					GC.COMMIT_DATE,
 					GC.FILES,
 					GC.PR_NUMBER,
-					GC.MERGE_COMMITS
+					GC.MERGE_COMMITS,
+					GC.ORIGIN_ID
 				FROM 
 					GIT_COMMIT AS GC
 				WHERE 
@@ -269,7 +282,8 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@files", files },
 				{ "@project", commit.Project },
 				{ "@prNumber", commit.PR },
-				{ "@mergeCommits", mergeCommits }
+				{ "@mergeCommits", mergeCommits },
+				{ "@originId", commit.OriginId }
 			};
 
 			string sql = @"
@@ -284,7 +298,8 @@ namespace GitSearch2.Repository.SqlServer {
 					COMMIT_DATE,
 					FILES,
 					PR_NUMBER,
-					MERGE_COMMITS
+					MERGE_COMMITS,
+					ORIGIN_ID
 				)
 				VALUES
 				(
@@ -297,7 +312,8 @@ namespace GitSearch2.Repository.SqlServer {
 					@commitDate,
 					@files,
 					@prNumber,
-					@mergeCommits
+					@mergeCommits,
+					@originId
 				)
 			;";
 
@@ -320,7 +336,8 @@ namespace GitSearch2.Repository.SqlServer {
 				{ "@files", files },
 				{ "@project", commit.Project },
 				{ "@prNumber", commit.PR },
-				{ "@mergeCommits", mergeCommits }
+				{ "@mergeCommits", mergeCommits },
+				{ "@originId", commit.OriginId }
 			};
 
 			const string sql = @"
@@ -335,7 +352,8 @@ namespace GitSearch2.Repository.SqlServer {
 					COMMIT_DATE,
 					FILES,
 					PR_NUMBER,
-					MERGE_COMMITS
+					MERGE_COMMITS,
+					ORIGIN_ID
 				)
 				VALUES
 				(
@@ -348,7 +366,8 @@ namespace GitSearch2.Repository.SqlServer {
 					@commitDate,
 					@files,
 					@prNumber,
-					@mergeCommits
+					@mergeCommits,
+					@originId
 				)
 			;";
 
@@ -366,6 +385,7 @@ namespace GitSearch2.Repository.SqlServer {
 			string dbProject = Db.GetString( reader, "PROJECT" );
 			string dbPrNumber = Db.GetString( reader, "PR_NUMBER" );
 			string dbCommits = Db.GetString( reader, "MERGE_COMMITS" );
+			string originId = Db.GetString( reader, "ORIGIN_ID" );
 
 			return new CommitDetails(
 				authorEmail: dbAuthorEmail,
@@ -378,7 +398,8 @@ namespace GitSearch2.Repository.SqlServer {
 				project: dbProject,
 				pr: dbPrNumber,
 				commits: dbCommits.Split( EnvironmentNewLine, StringSplitOptions.None ),
-				isMerge: false
+				isMerge: false,
+				originId: originId
 			);
 		}
 	}

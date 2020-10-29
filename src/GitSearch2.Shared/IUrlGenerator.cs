@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using GitSearch2.Shared;
 
-namespace GitSearch2.Client.Service {
+namespace GitSearch2.Shared {
 	public interface IUrlGenerator {
 
 		string CommitUrl( CommitDetails details );

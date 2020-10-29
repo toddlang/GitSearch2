@@ -8,12 +8,12 @@ namespace GitSearch2.Indexer {
 
 			int repoNameStart = remoteUrl.LastIndexOf( @"/" ) + 1;
 			int repoNameEnd = remoteUrl.IndexOf( ".git" );
-			string repoName = remoteUrl.Substring( repoNameStart, repoNameEnd - repoNameStart );
+			string repoName = remoteUrl[repoNameStart..repoNameEnd];
 
 			string cutUrl = remoteUrl.Substring( 0, remoteUrl.LastIndexOf( @"/" ) );
 			int projectStart = cutUrl.LastIndexOf( @"/" ) + 1;
 			int projectEnd = cutUrl.Length;
-			string projectName = cutUrl.Substring( projectStart, projectEnd - projectStart );
+			string projectName = cutUrl[projectStart..projectEnd];
 
 			return new RepoProjectName( repoName, projectName );
 		}

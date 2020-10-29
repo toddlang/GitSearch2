@@ -12,7 +12,7 @@ namespace GitSearch2.Shared.Tests.Unit {
 			var description = new List<string>() { "description" };
 			var files = new List<string>() { "files" };
 			var commits = new List<string>() { "commits" };
-			var details = new CommitDetails( description, "repo", "authorEmail", "authorName", "date", files, "commitId", "project", "pr", commits, true );
+			var details = new CommitDetails( description, "repo", "authorEmail", "authorName", "date", files, "commitId", "project", "pr", commits, true, "github" );
 
 			CollectionAssert.AreEqual( description, details.Description );
 			Assert.AreEqual( "repo", details.Repo );
@@ -25,39 +25,40 @@ namespace GitSearch2.Shared.Tests.Unit {
 			Assert.AreEqual( "pr", details.PR );
 			CollectionAssert.AreEqual( commits, details.Commits );
 			Assert.AreEqual( true, details.IsMerge );
+			Assert.AreEqual( "github", details.OriginId );
 		}
 
 		[Test]
 		public void Ctor_NullDescription_ThrowsArgumentException() {
-			Assert.Throws<ArgumentException>( () => { new CommitDetails( null, "repo", "authorEmail", "authorName", "date", new List<string>(), "commitId", "project", "pr", new List<string>(), false ); } );
+			Assert.Throws<ArgumentException>( () => { new CommitDetails( null, "repo", "authorEmail", "authorName", "date", new List<string>(), "commitId", "project", "pr", new List<string>(), false, "github" ); } );
 		}
 
 		[TestCase( default(string ))]
 		[TestCase( "" )]
 		[TestCase( " ")]
 		public void Ctor_BadRepo_ThrowsArgumentException( string repo ) {
-			Assert.Throws<ArgumentException>( () => { new CommitDetails( new List<string>(), repo, "authorEmail", "authorName", "date", new List<string>(), "commitId", "project", "pr", new List<string>(), false ); } );
+			Assert.Throws<ArgumentException>( () => { new CommitDetails( new List<string>(), repo, "authorEmail", "authorName", "date", new List<string>(), "commitId", "project", "pr", new List<string>(), false, "github" ); } );
 		}
 
 		[TestCase( default( string ) )]
 		[TestCase( "" )]
 		[TestCase( " " )]
 		public void Ctor_BadAuthorName_ThrowsArgumentException( string authorName ) {
-			Assert.Throws<ArgumentException>( () => { new CommitDetails( new List<string>(), "repo", "authorEmail", authorName, "date", new List<string>(), "commitId", "project", "pr", new List<string>(), false ); } );
+			Assert.Throws<ArgumentException>( () => { new CommitDetails( new List<string>(), "repo", "authorEmail", authorName, "date", new List<string>(), "commitId", "project", "pr", new List<string>(), false, "github" ); } );
 		}
 
 		[TestCase( default( string ) )]
 		[TestCase( "" )]
 		[TestCase( " " )]
 		public void Ctor_BadDate_ThrowsArgumentException( string date ) {
-			Assert.Throws<ArgumentException>( () => { new CommitDetails( new List<string>(), "repo", "authorEmail", "authorName", date, new List<string>(), "commitId", "project", "pr", new List<string>(), false ); } );
+			Assert.Throws<ArgumentException>( () => { new CommitDetails( new List<string>(), "repo", "authorEmail", "authorName", date, new List<string>(), "commitId", "project", "pr", new List<string>(), false, "github" ); } );
 		}
 
 		[TestCase( default( string ) )]
 		[TestCase( "" )]
 		[TestCase( " " )]
 		public void Ctor_BadCommitId_ThrowsArgumentException( string commitId ) {
-			Assert.Throws<ArgumentException>( () => { new CommitDetails( new List<string>(), "repo", "authorEmail", "authorName", "date", new List<string>(), commitId, "project", "pr", new List<string>(), false ); } );
+			Assert.Throws<ArgumentException>( () => { new CommitDetails( new List<string>(), "repo", "authorEmail", "authorName", "date", new List<string>(), commitId, "project", "pr", new List<string>(), false, "github" ); } );
 		}
 	}
 }

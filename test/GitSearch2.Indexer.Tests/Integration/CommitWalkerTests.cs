@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Threading;
 using GitSearch2.Repository;
 using GitSearch2.Repository.Sqlite;
+using GitSearch2.Shared;
 using LibGit2Sharp;
 using NUnit.Framework;
 
@@ -20,6 +18,7 @@ namespace GitSearch2.Indexer.Tests.Integration {
 		private ICommitWalker _walker;
 		private ICommitRepository _commitRepository;
 		private IGitRepoProvider _gitRepoProvider;
+		private IRepoWebsiteIdentifier _repoWebsiteIdentifier;
 
 		[SetUp]
 		public void SetUp() {
@@ -27,6 +26,7 @@ namespace GitSearch2.Indexer.Tests.Integration {
 			_repoPath = LibGit2Sharp.Repository.Init( Path.Combine( _testFolder, "gitrepo" ), false );
 			_workingFolder = Directory.GetParent( Directory.GetParent( _repoPath ).FullName ).FullName;
 			_repository = new LibGit2Sharp.Repository( _repoPath );
+			_repoWebsiteIdentifier = new TestingWebsiteIdentifier();
 
 			var sqliteOptions = new SqliteOptions() {
 				ConnectionString = $"Data Source={Path.Combine( _testFolder, "integrationtests.sqlite" )}"
@@ -44,11 +44,13 @@ namespace GitSearch2.Indexer.Tests.Integration {
 				_commitRepository,
 				repoNameParser,
 				statisticsDisplay,
-				_gitRepoProvider );
+				_gitRepoProvider,
+				_repoWebsiteIdentifier );
 
 			Signature author = new Signature( "Test", "test@localhost.com", DateTimeOffset.Now );
 			Signature committer = author;
 			_repository.Commit( "Initial commit", author, committer );
+			
 		}
 
 		[TearDown]

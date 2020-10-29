@@ -26,7 +26,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace GitSearch2.Client.Service {
+namespace GitSearch2.Shared {
 #pragma warning disable IDE1006 // Naming Styles
 	public class Sha256 {
 		private static readonly uint[] K = new uint[64] {

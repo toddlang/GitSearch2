@@ -3,6 +3,7 @@ using CommandLine;
 using GitSearch2.Repository;
 using GitSearch2.Repository.Sqlite;
 using GitSearch2.Repository.SqlServer;
+using GitSearch2.Shared;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GitSearch2.Indexer {
@@ -18,7 +19,8 @@ namespace GitSearch2.Indexer {
 						  .AddSingleton<IStatisticsDisplay, StatisticsDisplay>()
 						  .AddSingleton<INameParser, RemoteNameParser>()
 						  .AddSingleton<IGitRepoProvider, CyclingGitRepoProvider>()
-						  .AddSingleton<IExecutor, LoopingExecutor>();
+						  .AddSingleton<IExecutor, LoopingExecutor>()
+						  .AddSharedServices();
 
 						switch( opts.Database ) {
 							case Database.Sqlite: {
