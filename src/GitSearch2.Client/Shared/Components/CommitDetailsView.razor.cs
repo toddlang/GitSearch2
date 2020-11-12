@@ -43,7 +43,7 @@ namespace GitSearch2.Client.Shared.Components {
 		) {
 			string line = description.FirstOrDefault( d => d.StartsWith( "subrepo:" ) );
 
-			if (line == default) {
+			if( line == default ) {
 				return (project, repo, sha);
 			}
 
