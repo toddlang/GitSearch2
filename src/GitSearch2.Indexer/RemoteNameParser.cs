@@ -11,6 +11,9 @@ namespace GitSearch2.Indexer {
 			string repoName = remoteUrl[repoNameStart..repoNameEnd];
 
 			string cutUrl = remoteUrl.Substring( 0, remoteUrl.LastIndexOf( @"/" ) );
+			if (cutUrl.Contains(":")) {
+				cutUrl = cutUrl[( cutUrl.IndexOf( ":" ) + 1 )..];
+			}
 			int projectStart = cutUrl.LastIndexOf( @"/" ) + 1;
 			int projectEnd = cutUrl.Length;
 			string projectName = cutUrl[projectStart..projectEnd];
