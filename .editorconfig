@@ -6,8 +6,7 @@ tab_width                = 4
 trim_trailing_whitespace = true
 insert_final_newline     = true
 max_line_length          = off
-guidelines				 = 80
-charset					 = utf-8
+guidelines               = 80
 
 # C# specific settings:
 #   https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
@@ -49,6 +48,8 @@ dotnet_style_prefer_conditional_expression_over_return                   = true:
 
 dotnet_style_coalesce_expression                                         = true:suggestion                      # default
 dotnet_style_null_propagation                                            = true:suggestion                      # default
+
+dotnet_diagnostic.IDE0090.severity                                       = none                                 # Use new(...)
 
 csharp_style_var_for_built_in_types                                      = false:suggestion
 csharp_style_var_when_type_is_apparent                                   = false:none

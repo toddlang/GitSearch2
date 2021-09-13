@@ -16,7 +16,7 @@ namespace GitSearch2.Client {
 			builder.Services.AddSingleton<IGitQueryService, GitQueryService>();
 
 			builder.RootComponents.Add<App>( "app" );
-			builder.Services.AddSingleton(
+			builder.Services.AddSingleton(sp =>
 				new HttpClient {
 					BaseAddress = new Uri( builder.HostEnvironment.BaseAddress )
 				}
