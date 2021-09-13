@@ -1,4 +1,3 @@
-using System.Linq;
 using LibGit2Sharp;
 
 namespace GitSearch2.Indexer {
@@ -11,7 +10,7 @@ namespace GitSearch2.Indexer {
 			string repoName = remoteUrl[repoNameStart..repoNameEnd];
 
 			string cutUrl = remoteUrl.Substring( 0, remoteUrl.LastIndexOf( @"/" ) );
-			if (cutUrl.Contains(":")) {
+			if (cutUrl.Contains(':')) {
 				cutUrl = cutUrl[( cutUrl.IndexOf( ":" ) + 1 )..];
 			}
 			int projectStart = cutUrl.LastIndexOf( @"/" ) + 1;

@@ -1,5 +1,3 @@
-using System;
-
 namespace GitSearch2.Indexer {
 
 	internal sealed class StatisticsDisplay : IStatisticsDisplay {

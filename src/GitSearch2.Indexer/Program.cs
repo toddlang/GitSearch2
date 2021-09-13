@@ -1,4 +1,3 @@
-using System;
 using CommandLine;
 using GitSearch2.Repository;
 using GitSearch2.Repository.Sqlite;

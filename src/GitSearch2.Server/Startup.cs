@@ -1,12 +1,6 @@
-using System;
 using GitSearch2.Repository;
 using GitSearch2.Repository.Sqlite;
 using GitSearch2.Repository.SqlServer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace GitSearch2.Server {

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace GitSearch2.Indexer {
 	internal sealed class Statistics : IStatistics {
 

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace GitSearch2.Shared {
 	public sealed record CommitDetails {
 

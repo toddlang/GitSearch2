@@ -1,10 +1,5 @@
-using System;
 using System.Security.Authentication;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 
@@ -36,7 +31,7 @@ namespace GitSearch2.Server {
 						} );
 
 						serverOptions.ConfigureHttpsDefaults( listenOptions => {
-							listenOptions.SslProtocols = SslProtocols.Tls12;
+							listenOptions.SslProtocols = SslProtocols.Tls12|SslProtocols.Tls13;
 						} );
 					} );
 

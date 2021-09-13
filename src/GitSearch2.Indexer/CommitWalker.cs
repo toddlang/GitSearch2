@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using GitSearch2.Repository;
 using GitSearch2.Shared;
 using LibGit2Sharp;

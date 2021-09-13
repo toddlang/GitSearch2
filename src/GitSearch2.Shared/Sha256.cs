@@ -20,10 +20,8 @@
  * THE SOFTWARE.
  */
 
-using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 
 namespace GitSearch2.Shared {

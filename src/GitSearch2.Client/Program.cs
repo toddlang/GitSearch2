@@ -1,10 +1,6 @@
-using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using GitSearch2.Client.Service;
 using GitSearch2.Shared;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace GitSearch2.Client {
 

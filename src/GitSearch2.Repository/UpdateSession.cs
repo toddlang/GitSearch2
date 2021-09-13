@@ -1,5 +1,3 @@
-using System;
-
 namespace GitSearch2.Repository {
 	public sealed record UpdateSession {
 

@@ -1,5 +1,3 @@
-using System.Net.Http;
-using System.Threading.Tasks;
 using GitSearch2.Shared;
 
 namespace GitSearch2.Client.Service {

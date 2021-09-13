@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace GitSearch2.Repository.SqlServer {
 	public class SqlServerRepository {
 
