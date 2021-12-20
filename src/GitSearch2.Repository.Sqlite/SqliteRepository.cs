@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace GitSearch2.Repository.Sqlite {
 
 	public class SqliteRepository {

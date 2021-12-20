@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using GitSearch2.Shared;
 using Microsoft.AspNetCore.Components;
 

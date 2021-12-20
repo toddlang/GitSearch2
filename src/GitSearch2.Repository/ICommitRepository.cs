@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using GitSearch2.Shared;
 
 namespace GitSearch2.Repository {

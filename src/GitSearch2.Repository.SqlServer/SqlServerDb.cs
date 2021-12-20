@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace GitSearch2.Repository.SqlServer {
 	internal sealed class SqlServerDb : IDb {

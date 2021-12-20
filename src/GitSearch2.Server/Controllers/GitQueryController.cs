@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using GitSearch2.Repository;
 using GitSearch2.Shared;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace GitSearch2.Server.Controllers {
 	[Route( "api/[controller]" )]

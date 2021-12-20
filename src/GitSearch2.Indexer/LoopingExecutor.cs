@@ -1,3 +1,4 @@
+using System;
 using GitSearch2.Repository;
 using LibGit2Sharp;
 

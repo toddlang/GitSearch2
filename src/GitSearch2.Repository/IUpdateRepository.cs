@@ -1,3 +1,5 @@
+using System;
+
 namespace GitSearch2.Repository {
 	public interface IUpdateRepository {
 		void Initialize();
