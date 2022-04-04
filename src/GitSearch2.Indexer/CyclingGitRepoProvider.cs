@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using LibGit2Sharp;
@@ -10,6 +11,7 @@ namespace GitSearch2.Indexer {
 		private readonly Options _options;
 		private LibGit2Sharp.Repository _gitRepo;
 		private int _diffCalls;
+		private bool _disposed;
 
 		public CyclingGitRepoProvider(
 			Options options
@@ -94,6 +96,28 @@ namespace GitSearch2.Indexer {
 			}
 
 			return files;
+		}
+
+		private void Dispose( bool disposing ) {
+			if( !_disposed ) {
+				if( disposing ) {
+					_gitRepo?.Dispose();
+				}
+				_gitRepo = null;
+				_disposed = true;
+			}
+		}
+
+		~CyclingGitRepoProvider()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: false);
+		}
+
+		void IDisposable.Dispose() {
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose( disposing: true );
+			GC.SuppressFinalize( this );
 		}
 	}
 }

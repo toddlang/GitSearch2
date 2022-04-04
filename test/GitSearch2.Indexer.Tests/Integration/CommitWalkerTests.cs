@@ -56,6 +56,9 @@ namespace GitSearch2.Indexer.Tests.Integration {
 		[TearDown]
 		public void TearDown() {
 			_repository.Dispose();
+			_repository = null;
+			_gitRepoProvider.Dispose();
+			_gitRepoProvider = null;
 			RecursiveDelete( new DirectoryInfo( _testFolder ) );
 		}
 

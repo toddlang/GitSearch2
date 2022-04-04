@@ -39,7 +39,6 @@ namespace GitSearch2.Server {
 						} );
 					} );
 
-					webBuilder.UseSerilog();
 					webBuilder.UseConfiguration( new ConfigurationBuilder()
 						.AddCommandLine( args )
 						.Build() );
