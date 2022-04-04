@@ -27,6 +27,7 @@ namespace GitSearch2.Server {
 
 		public static IHostBuilder CreateHostBuilder( string[] args ) {
 			return Host.CreateDefaultBuilder( args )
+				.UseSerilog()
 				.ConfigureWebHostDefaults( webBuilder => {
 
 					webBuilder.ConfigureKestrel( serverOptions => {
